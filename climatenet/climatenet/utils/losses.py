@@ -30,12 +30,13 @@ def jaccard_loss(logits, true, eps=1e-7):
     return (1 - jacc_loss)
 
 
-def cross_entropy_loss(y_logit, y_true,):
+def cross_entropy_loss(y_logit, y_true):
     '''
     Multi-label cross-entropy
     * Required "Wp", "Wn" as positive & negative class-weights
     y_true: true value
     y_logit: predicted value
+    WIP
     '''
     # N = len(df) # 37993  // df is data frame need to sub out
     # labels = df.keys()[1:] # ['label_1', ...., 'label_6']
@@ -69,6 +70,8 @@ def cross_entropy_loss_pytorch(y_logit, y_true):
     Multi-label cross-entropy with pytorch
     y_true: true value
     y_logit: predicted value
+    https://www.cs.toronto.edu/~lczhang/321/tut/tut04.pdf
+    https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
     '''
 
 

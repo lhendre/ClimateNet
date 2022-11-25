@@ -40,6 +40,8 @@ class Config():
         self.epochs = self.config_dict['epochs']
         self.fields = self.config_dict['fields']
         self.labels = self.config_dict['labels']
+        self.loss = self.config_dict['loss'] # can be jaccard_loss, cross_entropy_loss, or cross_entropy_loss_pytorch,
+
         self.description = self.config_dict['description']
 
         # Make reproducible
@@ -49,4 +51,3 @@ class Config():
     def save(self, save_path: str):
         with open(save_path, 'w', encoding='utf-8') as f:
             json.dump(self.config_dict, f, ensure_ascii=False, indent=4)
-        

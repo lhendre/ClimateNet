@@ -28,5 +28,7 @@
       "Tropical Cyclone",
       "Atmospheric River"
     ],
+
+    "loss":"jaccard_loss",
     "description": "The basic CGNet model. You can use this config to train your own model, or load it with our trained weights."
 }

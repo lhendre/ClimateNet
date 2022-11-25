@@ -143,7 +143,7 @@ class ChannelWiseConv(nn.Module):
         output = self.padding(input)
         output = self.conv(output)
         return output
-      
+
 class DilatedConv(nn.Module):
     def __init__(self, nIn, nOut, kSize, stride=1, d=1):
         """
@@ -228,15 +228,15 @@ class ContextGuidedBlock_Down(nn.Module):
         """
         super().__init__()
         self.conv1x1 = ConvBNPReLU(nIn, nOut, 3, 2)  #  size/2, channel: nIn--->nOut
-        
+
         self.F_loc = ChannelWiseConv(nOut, nOut, 3, 1)
         self.F_sur = ChannelWiseDilatedConv(nOut, nOut, 3, 1, dilation_rate)
-        
+
         self.bn = nn.BatchNorm2d(2*nOut, eps=1e-3)
         self.act = nn.PReLU(2*nOut)
         self.reduce = Conv(2*nOut, nOut,1,1)  #reduce dimension: 2*nOut--->nOut
-        
-        self.F_glo = FGlo(nOut, reduction)    
+
+        self.F_glo = FGlo(nOut, reduction)
 
     def forward(self, input):
         output = self.conv1x1(input)
@@ -247,7 +247,7 @@ class ContextGuidedBlock_Down(nn.Module):
         joi_feat = self.bn(joi_feat)
         joi_feat = self.act(joi_feat)
         joi_feat = self.reduce(joi_feat)     #channel= nOut
-        
+
         output = self.F_glo(joi_feat)  # F_glo is employed to refine the joint feature
 
         return output
@@ -258,7 +258,7 @@ class ContextGuidedBlock(nn.Module):
         """
         args:
            nIn: number of input channels
-           nOut: number of output channels, 
+           nOut: number of output channels,
            add: if true, residual learning
         """
         super().__init__()
@@ -274,8 +274,8 @@ class ContextGuidedBlock(nn.Module):
         output = self.conv1x1(input)
         loc = self.F_loc(output)
         sur = self.F_sur(output)
-        
-        joi_feat = torch.cat([loc, sur], 1) 
+
+        joi_feat = torch.cat([loc, sur], 1)
 
         joi_feat = self.bn_prelu(joi_feat)
 
@@ -295,4 +295,4 @@ class InputInjection(nn.Module):
     def forward(self, input):
         for pool in self.pool:
             input = pool(input)
-        return input   
+        return input

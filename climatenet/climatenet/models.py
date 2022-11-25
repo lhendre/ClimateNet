@@ -87,12 +87,9 @@ class CGNet():
                 aggregate_cm += get_cm(predictions, labels, 3)
 
                 # Pass backward
-                if self.config.loss is "jaccard_loss":
-                    loss = jaccard_loss(outputs, labels)
-                elif self.config.loss is "cross_entropy_loss_pytorch":
+                loss = jaccard_loss(outputs, labels)
+                if self.config.loss is "cross_entropy_loss_pytorch":
                     loss = cross_entropy_loss_pytorch(outputs, labels)
-                else:
-                    loss = jaccard_loss(outputs, labels)                    
                 epoch_loader.set_description(f'Loss: {loss.item()}')
                 loss.backward()
                 self.optimizer.step()

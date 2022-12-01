@@ -2,7 +2,7 @@ import netCDF4 as nc
 import os
 import random
 
-data_path = '/Users/lucashendren/workspace/cs230/Data-4/Train'
+data_path = '/Users/lucashendren/workspace/cs230/Data-4/Test/test'
 dims_to_change = ["lon"]
 
 for filename in os.listdir(data_path):

@@ -88,7 +88,7 @@ class CGNet():
 
                 # Pass backward
                 loss = jaccard_loss(outputs, labels)
-                if self.config.loss is "cross_entropy_loss_pytorch":
+                if self.config.loss == "cross_entropy_loss_pytorch":
                     loss = cross_entropy_loss_pytorch(outputs, labels)
                 epoch_loader.set_description(f'Loss: {loss.item()}')
                 loss.backward()

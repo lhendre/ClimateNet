@@ -75,6 +75,6 @@ def cross_entropy_loss_pytorch(y_logit, y_true):
     '''
 
 
-    loss = nn.CrossEntropyLoss(y_logit,y_true)
+    loss = nn.CrossEntropyLoss()
 
     return loss(y_logit,y_true)

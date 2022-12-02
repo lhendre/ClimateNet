@@ -2,7 +2,7 @@ import netCDF4 as nc
 import os
 import random
 
-data_path = '/Users/lucashendren/workspace/cs230/Data-4/Test/test'
+data_path = '/Users/lucashendren/workspace/cs230/Data-4/train'
 dims_to_change = ["lon"]
 
 for filename in os.listdir(data_path):
@@ -28,18 +28,25 @@ for filename in os.listdir(data_path):
             x = newDs.createVariable(name, variable.datatype, variable.dimensions)
             values = ds[name][:]
             if name in dims_to_change:
-                for i,val in enumerate(values):
-                    toAdd = random.randint(-180, 180)
-                    newVal=val+toAdd
-                    if newVal < -180:
-                        newVal= 360+newVal
-                    if newVal > 180:
-                        newVal= newVal-360
-                    values[i]=newVal
+                values=random.shuffle(values)
+                # values=x
+                # for i,val in enumerate(values):
+                #     toAdd = random.randint(-180, 180)
+                #     newVal=val+toAdd
+                #     if newVal < -180:
+                #         newVal= 360+newVal
+                #     if newVal > 180:
+                #         newVal= newVal-360
+                #     values[i]=newVal
 
             newDs[name][:] = values
             if name in dims_to_change:
-                print("old",ds.variables[name][0])
+                print("old1",ds.variables[name][0])
+                print("old2",ds.variables[name][1])
+                print("old4",ds.variables[name][3])
+                print("old1a",ds.variables["TMQ"][0])
+                print("LABELS",ds.variables["LABELS"])
+
                 print("new",newDs.variables[name][0])
         print("new",newDs)
 

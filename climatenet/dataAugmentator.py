@@ -2,7 +2,7 @@ import netCDF4 as nc
 import os
 
 data_path = '/Users/lucashendren/workspace/cs230/Data-4/Train'
-dims_to_change = ["lon","lat"]
+dims_to_change = ["lon"]
 
 for filename in os.listdir(data_path):
     f = os.path.join(data_path, filename)
@@ -13,7 +13,8 @@ for filename in os.listdir(data_path):
         continue
     if os.path.isfile(f):
         ds = nc.Dataset(f)
-        print(ds)
+
+        print("org",ds)
 
         newDs = nc.Dataset(newF, "a", format="NETCDF4")
         newDs.setncatts(ds.__dict__)
@@ -30,10 +31,11 @@ for filename in os.listdir(data_path):
                 for i,val in enumerate(values):
                     values[i]=val+1
             newDs[name][:] = values
+            x[:] = values
             if name in dims_to_change:
                 print("old",ds.variables[name][0])
                 print("new",newDs.variables[name][0])
         print(ds)
-        print(newDs)
+        print("new",newDs)
 
         newDs.close()

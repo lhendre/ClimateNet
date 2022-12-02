@@ -4,11 +4,13 @@ import random
 
 data_path = '/Users/lucashendren/workspace/cs230/Data-4/train'
 dims_to_change = ["lon"]
-
+# i=0
 for filename in os.listdir(data_path):
     f = os.path.join(data_path, filename)
     newF = os.path.join(data_path,"augmented-"+filename)
-
+    # if i>=2:
+    #     break
+    # i=i+1
     # checking if it is a file
     if filename == ".DS_Store":
         continue
@@ -28,7 +30,8 @@ for filename in os.listdir(data_path):
             x = newDs.createVariable(name, variable.datatype, variable.dimensions)
             values = ds[name][:]
             if name in dims_to_change:
-                values=random.shuffle(values)
+                random.shuffle(values)
+
                 # values=x
                 # for i,val in enumerate(values):
                 #     toAdd = random.randint(-180, 180)

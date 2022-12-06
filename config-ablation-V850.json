@@ -14,9 +14,9 @@
             "mean": 1.55302,
             "std": 8.29764
         },
-        "V850": {
-            "mean": 0.25413,
-            "std": 6.23163
+        "PSL": {
+            "mean": 100814.414,
+            "std": 1461.2227
         }
     },
     "labels": [
@@ -25,5 +25,5 @@
       "Atmospheric River"
     ],
     "loss": "jaccard"
-    "description": "The basic CGNet model without PSL for ablation"
+    "description": "The basic CGNet model without V850 for ablation"
 }

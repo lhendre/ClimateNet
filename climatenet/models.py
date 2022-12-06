@@ -402,18 +402,18 @@ class CGNetModule(nn.Module):
         """
         super().__init__()
 
-        self.level1_0 = ConvBNPReLU(channels, 32, 3, 2)      # feature map size divided 2, 1/2
-        self.level1_1 = ConvBNPReLU(32, 32, 3, 1)                          
-        self.level1_2 = ConvBNPReLU(32, 32, 3, 1)      
-        self.level1_3 = ConvBNPReLU(32, 32, 3, 1)
+        self.level1_0 = ConvBNPReLU(channels, 128, 3, 2)      # feature map size divided 2, 1/2
+        self.level1_1 = ConvBNPReLU(128, 128, 3, 1)
+        self.level1_2 = ConvBNPReLU(128, 128, 3, 1)
+        self.level1_3 = ConvBNPReLU(128, 128, 3, 1)
 
         self.sample1 = InputInjection(1)  #down-sample for Input Injection, factor=2
-        self.sample2 = InputInjection(2)  #down-sample for Input Injiection, factor=4
+        self.sample2 = InputInjection(1)  #down-sample for Input Injiection, factor=4
 
-        self.b1 = BNPReLU(32 + channels)
+        self.b1 = BNPReLU(128 + channels)
         
         #stage 2
-        self.level2_0 = ContextGuidedBlock_Down(32 + channels, 64, dilation_rate=2,reduction=8)  
+        self.level2_0 = ContextGuidedBlock_Down(128 + channels, 64, dilation_rate=2,reduction=8)
         self.level2 = nn.ModuleList()
         for i in range(0, M-1):
             self.level2.append(ContextGuidedBlock(64 , 64, dilation_rate=2, reduction=8))  #CG block

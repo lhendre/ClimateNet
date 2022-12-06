@@ -28,6 +28,6 @@
       "Tropical Cyclone",
       "Atmospheric River"
     ],
-    "loss": "jaccard"
+    "loss": "jaccard",
     "description": "The basic CGNet model"
 }

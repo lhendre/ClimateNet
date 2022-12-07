@@ -67,7 +67,7 @@ class ClimateDatasetLabeled(ClimateDataset):
     def augment_features(self, features: xr.DataArray, random_longitude_shift: int):
         for variable_name, stats in self.fields.items():
             var = features.sel(variable=variable_name).values
-            features.sel(variable=variable_name).values = np.roll(var, random_longitude_shift, axis=3)
+            features.sel(variable=variable_name).values = np.roll(var, random_longitude_shift, axis=2)
 
     def augment_labels(self, labels: xr.DataArray, random_longitude_shift: int):
         pixels = labels.values

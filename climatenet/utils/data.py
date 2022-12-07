@@ -83,8 +83,8 @@ class ClimateDatasetLabeled(ClimateDataset):
         random_longitude_shift = random.randint(0, 359)
         self.augment_features(features, random_longitude_shift)
 
+        labels = dataset['LABELS']
         # Augment labels with same randon longitude shifts
-        # labels = dataset['LABELS']
         # self.augment_labels(labels, random_longitude_shift)
 
         return features.transpose('time', 'variable', 'lat', 'lon'), labels

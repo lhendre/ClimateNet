@@ -65,13 +65,13 @@ class ClimateDatasetLabeled(ClimateDataset):
     Corresponds to the normal Climate Dataset, but returns labels as well and batches accordingly
     ''' 
     def augment_features(self, features: xr.DataArray, random_longitude_shift: int):
-        for variable_name, stats in self.fields.items():   
+        for variable_name, stats in self.fields.items():
             var = features.sel(variable=variable_name).values
-            var = np.roll(var, random_longitude_shift, axis=2)
+            features.sel(variable=variable_name).values = np.roll(var, random_longitude_shift, axis=2)
 
     def augment_labels(self, labels: xr.DataArray, random_longitude_shift: int):
         pixels = labels.values
-        pixels = np.roll(pixels, random_longitude_shift, axis=1)
+        return np.roll(pixels, random_longitude_shift, axis=1)
 
     def get_features_and_labels(self, dataset: xr.Dataset):
         
@@ -85,7 +85,7 @@ class ClimateDatasetLabeled(ClimateDataset):
 
         labels = dataset['LABELS']
         # Augment labels with same randon longitude shifts
-        # self.augment_labels(labels, random_longitude_shift)
+        labels = self.augment_labels(labels, random_longitude_shift)
 
         return features.transpose('time', 'variable', 'lat', 'lon'), labels
 

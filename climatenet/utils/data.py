@@ -80,7 +80,8 @@ class ClimateDatasetLabeled(ClimateDataset):
         self.normalize(features)
 
         # Augment features with random longitude shifts
-        random_longitude_shift = random.randint(0, 359)
+        random_gamma = random.randint(0, 1)
+        random_longitude_shift = random_gamma * random.randint(0, 359)
         self.augment_features(features, random_longitude_shift)
 
         # Augment labels with same randon longitude shifts

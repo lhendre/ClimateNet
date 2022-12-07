@@ -19,6 +19,11 @@ from climatenet.utils.utils import Config
 from os import path
 import pathlib
 
+# from netCDF4 import Dataset
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+# from tabulate import tabulate
+
 class CGNet():
     '''
     The high-level CGNet class. 
@@ -201,7 +206,30 @@ class CGNet():
 
         # Return training history
         return history
-        
+
+    def map_channel(self, ds, metric, lon=-80, lat=35, timesteps=[1, 4, 8, 11]):
+        samp = ds.isel(time=timesteps)
+        print("SLICE = ", samp)
+        p = samp.plot(
+            transform=ccrs.PlateCarree(),
+            col="time",
+            subplot_kws={"projection": ccrs.Orthographic(lon, lat)},
+            aspect=1.3, size=8
+        )
+
+        for ax in p.axes.flat:
+            ax.coastlines()
+            ax.gridlines()
+
+        print("up to draw")
+        plt.draw()
+        # fig = plt.figure()
+        plt.show(block=True)
+        print("Finished draw, about to savefig")
+        # plt.savefig('./visual_prediction.png')
+        # plt.show()
+        print("Finished map_channel")
+        return
 
     def predict(self, dataset: ClimateDataset, save_dir: str = None):
         '''Make predictions for the given dataset and return them as xr.DataArray'''
@@ -211,7 +239,16 @@ class CGNet():
         epoch_loader = tqdm(loader, leave=True)
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
-        predictions = []
+        coords, dims, batch_attrs = None, None, None
+
+        for batch in epoch_loader:
+            coords = batch.coords
+            del coords['variable']
+            dims = [dim for dim in batch.dims if dim != "variable"]
+            batch_attrs = batch.attrs
+
+        predictions = xr.DataArray(np.empty((4, 768, 1152)), coords=coords, dims=dims, attrs=batch_attrs)
+        # predictions = []
         for batch in epoch_loader:
             features = torch.tensor(batch.values)
             features = features.to(device)
@@ -223,10 +260,21 @@ class CGNet():
             coords = batch.coords
             del coords['variable']
             dims = [dim for dim in batch.dims if dim != "variable"]
-            
-            predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
-    
-        print(predictions)
+
+            predictions = xr.concat([predictions, xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs)], dim="time")
+            # predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
+            batch_attrs = batch.attrs
+
+        print("PREDICTIONS = ", predictions)
+        print("DIMS = ", dims)
+        print("coords = ", coords)
+        print("batch_attrs = ", batch_attrs)
+        # xr_predictions = xr.DataArray(predictions, coords=coords, dims=dims, attrs=batch_attrs)
+        # predictions_final = xr.concat(predictions, dim='time')  # xr.concat(predictions, dim='time')
+        print("START", predictions, "END")
+
+        self.map_channel(predictions, "LABELS")
+
         return xr.concat(predictions, dim='time')
 
     def validate(self, dataset: ClimateDatasetLabeled):

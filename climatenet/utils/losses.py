@@ -36,7 +36,7 @@ def inputs(logits, true):
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
     logits.to(device)
-    num_classes = logits.shape[1].to(device)
+    num_classes = logits.shape[1]
     true.to(device)
 
     true_1_hot = torch.eye(num_classes)[true.squeeze(1)]

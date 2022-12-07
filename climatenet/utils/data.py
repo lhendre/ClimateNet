@@ -2,6 +2,8 @@ from torch.utils.data import Dataset
 from os import listdir, path
 import xarray as xr
 from climatenet.utils.utils import Config
+import random
+import numpy as np
 
 class ClimateDataset(Dataset):
     '''
@@ -61,12 +63,33 @@ class ClimateDatasetLabeled(ClimateDataset):
     '''
     The labeled Climate Dataset class. 
     Corresponds to the normal Climate Dataset, but returns labels as well and batches accordingly
-    '''
+    ''' 
+    def augment_features(self, features: xr.DataArray, random_longitude_shift: int):
+        for variable_name, stats in self.fields.items():   
+            var = features.sel(variable=variable_name).values
+            var = np.roll(var, random_longitude_shift, axis=2)
+
+    def augment_labels(self, labels: xr.DataArray, random_longitude_shift: int):
+        pixels = labels.values
+        pixels = np.roll(pixels, random_longitude_shift, axis=1)
+
+    def get_features_and_labels(self, dataset: xr.Dataset):
+        features = dataset[list(self.fields)].to_array()
+        labels = dataset['LABELS']
+
+        # Normalize features
+        self.normalize(features)
+
+        # Augment data with random longitude shifts
+        random_longitude_shift = random.randint(0, 359)
+        self.augment_features(features, random_longitude_shift)
+        self.augment_labels(labels, random_longitude_shift)
+        return features.transpose('time', 'variable', 'lat', 'lon'), labels
 
     def __getitem__(self, idx: int):
         file_path: str = path.join(self.path, self.files[idx]) 
         dataset = xr.load_dataset(file_path)
-        return self.get_features(dataset), dataset['LABELS']
+        return self.get_features_and_labels(dataset)
 
     @staticmethod 
     def collate(batch):

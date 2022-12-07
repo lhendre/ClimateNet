@@ -95,7 +95,7 @@ def weighted_jaccard_loss(logits, true, eps=1e-7):
     union = get_union(cardinality, intersection)
 
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
-    weights = torch.tensor([0.355, 72.171, 5.875], device=device) # Tensor of size [ 3 ]
+    weights = torch.tensor([0.678, 31.08, 2.9], device=device) # Tensor of size [ 3 ]
 
     jacc_loss = (intersection / (union + eps)) # Tensor of size [ 3 x 1152 ]
     jacc_loss = jacc_loss.mean(1) # Tensor of size [ 3 ]

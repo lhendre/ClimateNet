@@ -5,9 +5,11 @@ import numpy as np
 import torch.nn.functional as F
 
 def loss_function(logits, true, config_loss='jaccard'):
+    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     loss = 0.0
+    
     if config_loss == "jaccard":
-        loss = jaccard_loss(logits, true)
+        loss = jaccard_loss(logits.to(device), true.to(device))
     elif config_loss == "weighted_jaccard":
         loss = weighted_jaccard_loss(logits, true)
     elif config_loss == "dice":
@@ -17,6 +19,7 @@ def loss_function(logits, true, config_loss='jaccard'):
     elif config_loss == "weighted_cross_entropy":
         loss = weighted_cross_entropy_loss(outputs, labels)
 
+    loss.to(device)
     return loss
 
 def inputs(logits, true):
@@ -30,6 +33,7 @@ def inputs(logits, true):
         true_1_hot: true classifications in a one-hot-encoded vector
         dims: dimensions of the true vector
     """
+
     num_classes = logits.shape[1]
     true_1_hot = torch.eye(num_classes)[true.squeeze(1)]
     true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()

@@ -108,6 +108,7 @@ class CGNet():
                 
                 # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
+                outputs = outputs.to(device)
 
                 # Update training confusion matrix
                 predictions = torch.max(outputs, 1)[1]

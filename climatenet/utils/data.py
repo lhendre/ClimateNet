@@ -74,16 +74,19 @@ class ClimateDatasetLabeled(ClimateDataset):
         pixels = np.roll(pixels, random_longitude_shift, axis=1)
 
     def get_features_and_labels(self, dataset: xr.Dataset):
-        features = dataset[list(self.fields)].to_array()
-        labels = dataset['LABELS']
-
+        
         # Normalize features
+        features = dataset[list(self.fields)].to_array()
         self.normalize(features)
 
-        # Augment data with random longitude shifts
+        # Augment features with random longitude shifts
         random_longitude_shift = random.randint(0, 359)
         self.augment_features(features, random_longitude_shift)
+
+        # Augment labels with same randon longitude shifts
+        labels = dataset['LABELS']
         self.augment_labels(labels, random_longitude_shift)
+
         return features.transpose('time', 'variable', 'lat', 'lon'), labels
 
     def __getitem__(self, idx: int):

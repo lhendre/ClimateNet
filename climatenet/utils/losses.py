@@ -13,11 +13,11 @@ def loss_function(logits, true, config_loss='jaccard'):
     elif config_loss == "weighted_jaccard":
         loss = weighted_jaccard_loss(logits, true)
     elif config_loss == "dice":
-        loss = dice_loss(outputs, labels)
+        loss = dice_loss(logits, true)
     elif config_loss == "cross_entropy":
-        loss = cross_entropy_loss(outputs, labels)
+        loss = cross_entropy_loss(logits, true)
     elif config_loss == "weighted_cross_entropy":
-        loss = weighted_cross_entropy_loss(outputs, labels)
+        loss = weighted_cross_entropy_loss(logits, true)
 
     loss.to(device)
     return loss
@@ -35,7 +35,7 @@ def inputs(logits, true):
     """
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     num_classes = logits.shape[1]
-    true_1_hot = torch.eye(num_classes, device=device)[true.squeeze(1)]
+    true_1_hot = torch.eye(num_classes, device = device)[true.squeeze(1)]
     true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
     probas = F.softmax(logits, dim=1)
     true_1_hot = true_1_hot.type(logits.type())

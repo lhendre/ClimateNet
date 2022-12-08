@@ -62,8 +62,10 @@ class CGNet():
             raise ValueError('''You need to specify either a config or a model path.''')
 
         self.optimizer = Adam(self.network.parameters(), lr=self.config.lr)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.2, patience=3, threshold=0.002, verbose=True)        
-        
+
+        if self.config.scheduler:
+            self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=2, threshold=0.002, verbose=True)
+
     def train(self, train_dataset: ClimateDatasetLabeled, val_dataset: ClimateDatasetLabeled=None):
         '''Train the network on the train dataset for the given amount of epochs, and validate it
         at each epoch on the validation dataset.'''
@@ -149,8 +151,8 @@ class CGNet():
             print("Sensitivity: ", t_sensitivity)
             print(np.array_str(np.around(training_confusion_matrix, decimals=3), precision=3))
 
-            # Compute and track validation history
             if val_dataset:
+                # Compute and track validation history
                 val_loss, val_aggregate_cm, val_ious, val_dices = self.validate(val_dataset)
 
                 validation_confusion_matrix = 100*val_aggregate_cm/np.sum(val_aggregate_cm)
@@ -176,7 +178,8 @@ class CGNet():
             self.network.train()
 
             # Update the learning rate if needed
-            self.scheduler.step(val_loss)
+            if self.config.scheduler:
+                self.scheduler.step(val_loss)
 
             # Check for early termination
             if val_loss < best_val_loss:
@@ -186,13 +189,8 @@ class CGNet():
                 best_val_loss *= 1 - 0.001
                 no_improvement_counter += 1
 
-            if no_improvement_counter >= 5:
-                break
-
-            # Save model at each epoch if specified in config.json
-            #if self.config.save_epochs : 
-                #self.save_model(self, self.config.model_path)
-                #print("Saving weights from epoch #", str(epoch), "\n")
+            if no_improvement_counter >= 4:
+                if self.config.scheduler: break # Early termination only if we use a learning rate scheduler
 
         # Return training history
         return history

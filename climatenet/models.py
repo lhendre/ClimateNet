@@ -196,7 +196,7 @@ class CGNet():
         return history
 
 
-    def predict(self, dataset: ClimateDataset, save_dir: str = None):
+    def predict(self, dataset: ClimateDatasetLabeled, save_dir: str = None):
         '''Make predictions for the given dataset and return them as xr.DataArray'''
         self.network.eval()
         collate = ClimateDataset.collate

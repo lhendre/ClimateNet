@@ -8,7 +8,7 @@ from climatenet.utils.utils import Config
 
 from os import path
 
-config = Config('models/TMQ-WS850-VRT850-PSL-.001-wce/config.json')
+config = Config('baseline/config.json')
 cgnet = CGNet(config)
 
 train_path = 'Data/engineered'
@@ -27,8 +27,8 @@ cgnet.save_model(path.join('models', model_path))
 # use a saved model with
 # cgnet.load_model('trained_cgnet')
 
-#class_masks = cgnet.predict(inference) # masks with 1==TC, 2==AR
-#event_masks = track_events(class_masks) # masks with event IDs
+class_masks = cgnet.predict(inference) # masks with 1==TC, 2==AR
+event_masks = track_events(class_masks) # masks with event IDs
 
-#analyze_events(event_masks, class_masks, 'results/')
-#visualize_events(event_masks, inference, 'pngs/')
+analyze_events(event_masks, class_masks, 'results/')
+visualize_events(event_masks, inference, 'pngs/')

@@ -206,7 +206,7 @@ class CGNet():
 
         predictions = []
         for features, labels in epoch_loader:
-            features = torch.tensor(batch.values)
+            features = torch.tensor(features.values)
             features = features.to(device)
 
             with torch.no_grad():

@@ -213,11 +213,11 @@ class CGNet():
                 outputs = torch.softmax(self.network(features), 1)
             preds = torch.max(outputs, 1)[1].cpu().numpy()
 
-            coords = batch.coords
+            coords = features.coords
             del coords['variable']
-            dims = [dim for dim in batch.dims if dim != "variable"]
+            dims = [dim for dim in features.dims if dim != "variable"]
 
-            predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
+            predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=features.attrs))
 
         print(predictions)
         return xr.concat(predictions, dim='time')

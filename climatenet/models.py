@@ -199,7 +199,7 @@ class CGNet():
     def predict(self, dataset: ClimateDatasetLabeled, save_dir: str = None):
         '''Make predictions for the given dataset and return them as xr.DataArray'''
         self.network.eval()
-        collate = ClimateDataset.collate
+        collate = ClimateDatasetLabeled.collate
         loader = DataLoader(dataset, batch_size=self.config.pred_batch_size, collate_fn=collate)
         epoch_loader = tqdm(loader, leave=True)
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")

@@ -206,6 +206,7 @@ class CGNet():
 
         predictions = []
         for features, labels in epoch_loader:
+            batch = features
             features = torch.tensor(features.values)
             features = features.to(device)
 
@@ -213,9 +214,9 @@ class CGNet():
                 outputs = torch.softmax(self.network(features), 1)
             preds = torch.max(outputs, 1)[1].cpu().numpy()
 
-            coords = features.coords
+            coords = batch.coords
             del coords['variable']
-            dims = [dim for dim in features.dims if dim != "variable"]
+            dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=features.attrs))
 

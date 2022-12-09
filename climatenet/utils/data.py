@@ -32,7 +32,7 @@ class ClimateDataset(Dataset):
     def __init__(self, path: str, config: Config):
         self.path: str = path
         self.fields: dict = config.fields
-        
+        self.augment: bool = config.augment
         self.files: [str] = [f for f in sorted(listdir(self.path)) if f[-3:] == ".nc"]
         self.length: int = len(self.files)
       
@@ -93,7 +93,10 @@ class ClimateDatasetLabeled(ClimateDataset):
     def __getitem__(self, idx: int):
         file_path: str = path.join(self.path, self.files[idx]) 
         dataset = xr.load_dataset(file_path)
-        return self.get_features_and_labels(dataset)
+        if self.augment:
+            return self.get_features_and_labels(dataset)
+        else:
+            return self.get_features(dataset), dataset['LABELS']
 
     @staticmethod 
     def collate(batch):

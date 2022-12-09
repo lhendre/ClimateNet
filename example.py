@@ -11,18 +11,17 @@ from os import path
 config = Config('baseline/config.json')
 cgnet = CGNet(config)
 
-train_path = 'Data/engineered'
+train_path = 'Data'
 inference_path = 'Data'
-
 
 train = ClimateDatasetLabeled(path.join(train_path, 'train'), config)
 test = ClimateDatasetLabeled(path.join(train_path, 'test'), config)
-#inference = ClimateDataset(inference_path, config)
+inference = ClimateDataset(inference_path, config)
 
 cgnet.train(train)
 cgnet.evaluate(test)
 
-model_path = "PSL-TMQ-VRT850-WS850-.001-jaccard"
+model_path = ""
 cgnet.save_model(path.join('models', model_path))
 # use a saved model with
 # cgnet.load_model('trained_cgnet')

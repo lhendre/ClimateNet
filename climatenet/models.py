@@ -26,7 +26,7 @@ import cartopy.crs as ccrs
 
 class CGNet():
     '''
-    The high-level CGNet class. 
+    The high-level CGNet class.
     This allows training and running CGNet without interacting with PyTorch code.
     If you are looking for a higher degree of control over the training and inference,
     we suggest you directly use the CGNetModule class, which is a PyTorch nn.Module.
@@ -49,10 +49,10 @@ class CGNet():
     '''
 
     def __init__(self, config: Config = None, model_path: str = None):
-    
+
         if config is not None and model_path is not None:
-            raise ValueError('''Config and weight path set at the same time. 
-            Pass a config if you want to create a new model, 
+            raise ValueError('''Config and weight path set at the same time.
+            Pass a config if you want to create a new model,
             and a weight_path if you want to load an existing model.''')
         if config is not None:
             # Create new model
@@ -67,13 +67,13 @@ class CGNet():
             raise ValueError('''You need to specify either a config or a model path.''')
 
         self.optimizer = Adam(self.network.parameters(), lr=self.config.lr)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=1, threshold=0.002, verbose=True)        
-        
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=1, threshold=0.002, verbose=True)
+
     def train(self, train_dataset: ClimateDatasetLabeled, val_dataset: ClimateDatasetLabeled):
         '''Train the network on the train dataset for the given amount of epochs, and validate it
         at each epoch on the validation dataset.'''
         self.network.train()
-        
+
         # Initialize training history
         history = pd.DataFrame(columns=['minibatch_loss', 'epoch_avg_loss', 'epoch_val_loss', 'learning_rate', 'evaluation_loss',\
                                         'training_confusion_matrix', 'validation_confusion_matrix', 'evaluation_confusion_matrix',\
@@ -102,14 +102,14 @@ class CGNet():
             epoch_loss = 0.
 
             for features, labels in epoch_loader:
-        
+
                 # Move dataset to GPU if available
                 features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)
 
                 features = features.to(device)
                 labels = labels.to(device)
-                
+
                 # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
 
@@ -126,15 +126,15 @@ class CGNet():
                     train_loss = cross_entropy_loss_pytorch(outputs, labels)
                 elif self.config.loss == "weighted_cross_entropy":
                     train_loss = weighted_cross_entropy_loss(outputs, labels)
-                    
+
                 epoch_loader.set_description(f'Loss: {train_loss.item():.5f} ({self.config.loss}) | LR: {self.optimizer.param_groups[0]["lr"]}')
-                
+
                 epoch_loss += train_loss.item()
                 history = history.append({'minibatch_loss': train_loss.item()}, ignore_index=True)
 
                 train_loss.backward()
                 self.optimizer.step()
-                self.optimizer.zero_grad() 
+                self.optimizer.zero_grad()
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -147,13 +147,13 @@ class CGNet():
                                     'training_confusion_matrix': np.array(training_confusion_matrix),\
                                     'train_ious': train_ious, 'train_dices': train_dices,\
                                     'train_precision': t_precision, 'train_recall': t_recall,\
-                                    'train_specificity': t_specificity, 'train_sensitivity': t_sensitivity}, ignore_index=True)            
+                                    'train_specificity': t_specificity, 'train_sensitivity': t_sensitivity}, ignore_index=True)
 
             # Training stats reporting
             print(f'\nTraining loss: {epoch_loss:.5f} ({self.config.loss}) ')
             print('Classes:      [    BG         TCs        ARs   ]')
             print('IoUs:        ', train_ious, ' | Mean: ', train_ious.mean())
-            print('Dice score:  ', train_dices, ' | Mean: ', train_dices.mean())            
+            print('Dice score:  ', train_dices, ' | Mean: ', train_dices.mean())
             print("Precision:   ", t_precision)
             print("Recall:      ", t_recall)
             print("Specificity: ", t_specificity)
@@ -170,7 +170,7 @@ class CGNet():
                                     'validation_confusion_matrix': np.array(validation_confusion_matrix),\
                                     'val_ious': val_ious, 'val_dices': val_dices,\
                                     'val_precision': v_precision, 'val_recall': v_recall,\
-                                    'val_specificity': v_specificity, 'val_sensitivity': v_sensitivity}, ignore_index=True)   
+                                    'val_specificity': v_specificity, 'val_sensitivity': v_sensitivity}, ignore_index=True)
 
             # Validation stats reporting
             print(f'\nValidation loss: {val_loss:.5f} ({self.config.loss})')
@@ -182,7 +182,7 @@ class CGNet():
             print("Specificity: ", t_specificity)
             print("Sensitivity: ", t_sensitivity)
             print(np.array_str(np.around(validation_confusion_matrix, decimals=3), precision=3))
-            
+
             self.network.train()
 
             # Update the learning rate if needed
@@ -200,7 +200,7 @@ class CGNet():
                 break
 
             # Save model at each epoch if specified in config.json
-            #if self.config.save_epochs : 
+            #if self.config.save_epochs :
                 #self.save_model(self, self.config.model_path)
                 #print("Saving weights from epoch #", str(epoch), "\n")
 
@@ -209,7 +209,6 @@ class CGNet():
 
     def map_channel(self, ds, metric, lon=-80, lat=35, timesteps=[1, 4, 8, 11]):
         samp = ds.isel(time=timesteps)
-        print("SLICE = ", samp)
         p = samp.plot(
             transform=ccrs.PlateCarree(),
             col="time",
@@ -221,14 +220,8 @@ class CGNet():
             ax.coastlines()
             ax.gridlines()
 
-        print("up to draw")
         plt.draw()
-        # fig = plt.figure()
         plt.show(block=True)
-        print("Finished draw, about to savefig")
-        # plt.savefig('./visual_prediction.png')
-        # plt.show()
-        print("Finished map_channel")
         return
 
     def predict(self, dataset: ClimateDataset, save_dir: str = None):
@@ -265,14 +258,6 @@ class CGNet():
             # predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
             batch_attrs = batch.attrs
 
-        print("PREDICTIONS = ", predictions)
-        print("DIMS = ", dims)
-        print("coords = ", coords)
-        print("batch_attrs = ", batch_attrs)
-        # xr_predictions = xr.DataArray(predictions, coords=coords, dims=dims, attrs=batch_attrs)
-        # predictions_final = xr.concat(predictions, dim='time')  # xr.concat(predictions, dim='time')
-        print("START", predictions, "END")
-
         self.map_channel(predictions, "LABELS")
 
         return xr.concat(predictions, dim='time')
@@ -294,7 +279,7 @@ class CGNet():
         epoch_loss = 0.
 
         for features, labels in epoch_loader:
-        
+
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
@@ -338,7 +323,7 @@ class CGNet():
         num_minibatches = len(loader)
 
         for features, labels in epoch_loader:
-        
+
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
@@ -378,7 +363,7 @@ class CGNet():
                                   'test_sensitivity': [test_sensitivity]})
 
         # Evaluation stats reporting:
-        print(f'\nTest loss: {epoch_loss:.5f} ({self.config.loss})')         
+        print(f'\nTest loss: {epoch_loss:.5f} ({self.config.loss})')
         print('Classes:      [    BG         TCs        ARs   ]')
         print('IoUs:        ', test_ious, ' | Mean: ', test_ious.mean())
         print('Dice score:  ', test_dices, ' | Mean: ', test_dices.mean())
@@ -387,7 +372,7 @@ class CGNet():
         print("Specificity: ", test_specificity)
         print("Sensitivity: ", test_sensitivity)
         print(np.array_str(np.around(test_confusion_matrix, decimals=3), precision=3))
-  
+
         # Return evaluation metrics
         return history
 
@@ -396,7 +381,7 @@ class CGNet():
         Save model weights and config to a directory.
         '''
         # create save_path if it doesn't exist
-        pathlib.Path(save_path).mkdir(parents=True, exist_ok=True) 
+        pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
 
         # save weights and config
         self.config.save(path.join(save_path, 'config.json'))
@@ -404,13 +389,13 @@ class CGNet():
 
     def load_model(self, model_path: str):
         '''
-        Load a model. While this can easily be done using the normal constructor, this might make the code more readable - 
+        Load a model. While this can easily be done using the normal constructor, this might make the code more readable -
         we instantly see that we're loading a model, and don't have to look at the arguments of the constructor first.
         '''
         self.config = Config(path.join(model_path, 'config.json'))
         self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)))
         self.network.load_state_dict(torch.load(path.join(model_path, 'weights.pth')))
-    
+
     def print_model(self, dataset: ClimateDatasetLabeled, depth=1):
         """
         Prints a summary of the network using torchinfo (https://github.com/TylerYep/torchinfo).
@@ -451,23 +436,23 @@ class CGNetModule(nn.Module):
         super().__init__()
 
         self.level1_0 = ConvBNPReLU(channels, 32, 3, 2)      # feature map size divided 2, 1/2
-        self.level1_1 = ConvBNPReLU(32, 32, 3, 1)                          
-        self.level1_2 = ConvBNPReLU(32, 32, 3, 1)      
+        self.level1_1 = ConvBNPReLU(32, 32, 3, 1)
+        self.level1_2 = ConvBNPReLU(32, 32, 3, 1)
 
         self.sample1 = InputInjection(1)  #down-sample for Input Injection, factor=2
         self.sample2 = InputInjection(2)  #down-sample for Input Injiection, factor=4
 
         self.b1 = BNPReLU(32 + channels)
-        
+
         #stage 2
-        self.level2_0 = ContextGuidedBlock_Down(32 + channels, 64, dilation_rate=2,reduction=8)  
+        self.level2_0 = ContextGuidedBlock_Down(32 + channels, 64, dilation_rate=2,reduction=8)
         self.level2 = nn.ModuleList()
         for i in range(0, M-1):
             self.level2.append(ContextGuidedBlock(64 , 64, dilation_rate=2, reduction=8))  #CG block
         self.bn_prelu_2 = BNPReLU(128 + channels)
-        
+
         #stage 3
-        self.level3_0 = ContextGuidedBlock_Down(128 + channels, 128, dilation_rate=4, reduction=16) 
+        self.level3_0 = ContextGuidedBlock_Down(128 + channels, 128, dilation_rate=4, reduction=16)
         self.level3 = nn.ModuleList()
         for i in range(0, N-1):
             self.level3.append(ContextGuidedBlock(128 , 128, dilation_rate=4, reduction=16)) # CG block
@@ -503,11 +488,11 @@ class CGNetModule(nn.Module):
         output0 = self.level1_2(output0)
         inp1 = self.sample1(input)
         inp2 = self.sample2(input)
-        
+
         # stage 2
         output0_cat = self.b1(torch.cat([output0, inp1], 1))
         output1_0 = self.level2_0(output0_cat) # down-sampled
-        
+
         for i, layer in enumerate(self.level2):
             if i==0:
                 output1 = layer(output1_0)
@@ -525,12 +510,10 @@ class CGNetModule(nn.Module):
                 output2 = layer(output2)
 
         output2_cat = self.bn_prelu_3(torch.cat([output2_0, output2], 1))
-       
+
         # classifier
         classifier = self.classifier(output2_cat)
 
         # upsample segmentation map ---> the input image size
         out = F.interpolate(classifier, input.size()[2:], mode='bilinear',align_corners = False)   #Upsample score map, factor=8
         return out
-  
-   

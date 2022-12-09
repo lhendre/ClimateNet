@@ -15,7 +15,7 @@ args = parser.parse_args()
 model_path = args.model_path
 data_path = args.data_path
 
-# Load model architecture and hyperparameters 
+# Load model architecture and hyperparameters
 config = Config(model_path + 'config.json')
 cgnet = CGNet(config)
 
@@ -27,6 +27,9 @@ train_history = cgnet.train(train, val)
 # Evaluate performance
 test = ClimateDatasetLabeled(path.join(data_path, 'test'), config)
 test_history = cgnet.evaluate(test)
+
+
+class_masks = cgnet.predict(test) # masks with 1==TC, 2==AR
 
 # Save model weights
 cgnet.save_model(model_path)

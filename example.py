@@ -8,7 +8,7 @@ from climatenet.utils.utils import Config
 
 from os import path
 
-config = Config('models/TMQ-WS850-VRT850-PSL-.001-wce/config.json')
+config = Config('baseline/config.json')
 cgnet = CGNet(config)
 
 train_path = 'Data'

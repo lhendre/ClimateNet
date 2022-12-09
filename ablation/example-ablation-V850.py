@@ -11,9 +11,8 @@ from os import path
 config = Config(".json")
 cgnet = CGNet(config)
 
-train_path = ""
-inference_path = ""
-
+train_path = '../Data/engineered'
+inference_path = '../Data'
 
 train = ClimateDatasetLabeled(path.join(train_path, 'train'), config)
 test = ClimateDatasetLabeled(path.join(train_path, 'test'), config)

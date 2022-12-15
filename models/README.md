@@ -1,7 +1,11 @@
 
 # Models
 
+<<<<<<< HEAD
 ## Results
+=======
+## Experiments
+>>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650
 
 We trained and report here the following models:
 
@@ -14,6 +18,7 @@ We trained and report here the following models:
 7. Model 3 + weighted Jaccard loss 
 
 For each model, we provide:
+<<<<<<< HEAD
 - config.json: configuration file to load the model
 - weights.pth: trained weights ready to use for predictions
 - history.csv: complete training, validation and test metrics history
@@ -43,6 +48,19 @@ Reference: https://github.com/TylerYep/torchinfo
 =================================================================================================================================================
 Layer (type:depth-idx)                        Input Shape               Output Shape              Param #                   Mult-Adds
 =================================================================================================================================================
+=======
+- config.json: configuration file for loading
+- weights.pth: trained weights ready to use for predictions
+- history.csv: complete training, validation and test metrics
+
+
+## CGNet Architecture
+
+```
+========================================================================================================================================
+Layer (type:depth-idx)                        Input Shape               Output Shape              Param #                   Mult-Adds
+========================================================================================================================================
+>>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650
 CGNetModule                                   [4, 4, 768, 1152]         [4, 3, 768, 1152]         --                        --
 ├─ConvBNPReLU: 1-1                            [4, 4, 768, 1152]         [4, 32, 384, 576]         --                        --
 │    └─Wrap: 2-1                              [4, 4, 768, 1152]         [4, 4, 770, 1154]         --                        --
@@ -256,15 +274,28 @@ CGNetModule                                   [4, 4, 768, 1152]         [4, 3, 7
 │    └─Conv: 2-57                             [4, 256, 96, 144]         [4, 3, 96, 144]           --                        --
 │    │    └─Wrap: 3-141                       [4, 256, 96, 144]         [4, 256, 96, 144]         --                        --
 │    │    └─Conv2d: 3-142                     [4, 256, 96, 144]         [4, 3, 96, 144]           768                       42,467,328
+<<<<<<< HEAD
 =================================================================================================================================================
+=======
+
+>>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650
 Total params: 494,232
 Trainable params: 494,232
 Non-trainable params: 0
 Total mult-adds (G): 45.86
+<<<<<<< HEAD
 =================================================================================================================================================
+=======
+
+>>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650
 Input size (MB): 56.62
 Forward/backward pass size (MB): 11057.09
 Params size (MB): 1.98
 Estimated Total Size (MB): 11115.69
+<<<<<<< HEAD
 =================================================================================================================================================
 ```
+=======
+
+
+>>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650

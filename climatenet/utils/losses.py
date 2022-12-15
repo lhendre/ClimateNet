@@ -5,9 +5,11 @@ import numpy as np
 import torch.nn.functional as F
 
 def loss_function(logits, true, config_loss='jaccard'):
+    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     loss = 0.0
+    
     if config_loss == "jaccard":
-        loss = jaccard_loss(logits, true)
+        loss = jaccard_loss(logits.to(device), true.to(device))
     elif config_loss == "weighted_jaccard":
         loss = weighted_jaccard_loss(logits, true)
     elif config_loss == "dice":
@@ -19,6 +21,7 @@ def loss_function(logits, true, config_loss='jaccard'):
     elif config_loss == "focal_tversky":
         loss = focal_tversky_loss(logits, true)
 
+    loss.to(device)
     return loss
 
 def inputs(logits, true):
@@ -32,7 +35,6 @@ def inputs(logits, true):
         true_1_hot: true classifications in a one-hot-encoded vector
         dims: dimensions of the true vector
     """
-
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     num_classes = logits.shape[1]
     true_1_hot = torch.eye(num_classes, device = device)[true.squeeze(1)]
@@ -74,6 +76,32 @@ def jaccard_loss(logits, true, eps=1e-7):
     union = get_union(cardinality, intersection)
 
     jacc_loss = (intersection / (union + eps)).mean()
+    return (1 - jacc_loss)
+
+def weighted_jaccard_loss(logits, true, eps=1e-7):
+    """Computes the Jaccard loss, a.k.a the IoU loss.
+    Note that PyTorch optimizers minimize a loss. In this
+    case, we would like to maximize the jaccard loss so we
+    return the negated jaccard loss.
+    Args:
+        true: a tensor of shape [B, H, W] or [B, 1, H, W].
+        logits: a tensor of shape [B, C, H, W]. Corresponds to
+            the raw output or logits of the model.
+        eps: added to the denominator for numerical stability.
+    Returns:
+        jacc_loss: the Jaccard loss.
+    """
+    probas, true_1_hot, dims = inputs(logits, true)
+    intersection = get_intersection(probas, true_1_hot, dims)
+    cardinality = get_cardinality(probas, true_1_hot, dims)
+    union = get_union(cardinality, intersection)
+
+    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    weights = torch.tensor([0.678, 31.08, 2.9], device=device) # Tensor of size [ 3 ]
+
+    jacc_loss = (intersection / (union + eps)) # Tensor of size [ 3 x 1152 ]
+    jacc_loss = jacc_loss.mean(1) # Tensor of size [ 3 ]
+    jacc_loss = (jacc_loss * weights).mean() # Tensor of size [ 1 ]
     return (1 - jacc_loss)
 
 def dice_loss(logits, true, eps=1e-7):

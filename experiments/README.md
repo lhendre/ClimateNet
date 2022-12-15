@@ -9,7 +9,7 @@ We ran ablation studies for the core ClimateNet channels on which the baseline m
 
 Syntax:
 ```
-$ example-ablation-XYZ.py
+$ python3 example-ablation-XYZ.py
 
 <WYZ>: channel to be removed during training.
 ```

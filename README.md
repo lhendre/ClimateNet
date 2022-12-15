@@ -2,10 +2,28 @@
 
 Tropical cyclones (TCs), also known as hurricanes, typhoons or tropical storms, are the most destructive type of extreme weather events and have caused $1.1 trillion in damage and 6,697 deaths since 1980 in the US alone. 
 
-In this project, we apply the light-weight CGNet context guided computer vision architecture to semantic segmentation for the identification of tropical cyclones in climate data.
-
+In this project, we apply the light-weight CGNet context guided computer vision architecture to semantic segmentation for the identification of tropical cyclones in climate simulations data.
 
 https://user-images.githubusercontent.com/3156495/207959086-e1a2e246-b863-4420-8275-b76c4877ba6d.mp4
+
+## Getting started
+
+**1. Data**
+- Run the `download_climatenet.ipynb` notebook in the `data/` folder to download ClimateNet.
+- Optionally: split the train set in train (1996-2007) and val (2008-2010).
+
+**2. Model:** 
+- We provide `train_eval.py`, a script that trains a model on the chosen parameters (in `config.json`).
+Syntax:
+```
+$ train_eval.py --model_path <model_path> -data_path <data_path>
+$ train_eval.py -m <model_path> -d <data_path>
+
+<model_path>: path to folder containing config.json describing the model 
+<data_path>: path folder containing dataset with corresponding layers
+
+Example: train_eval.py -m '/model/1. Baseline' -d /data/ClimateNet/
+```
 
 ## Directory structure
 
@@ -71,7 +89,7 @@ The data set is split in a training set of 398 (map, labels) pairs spanning year
 
 For learning-rate scheduling purposes, we further split the train set into a training (1996-2007) and valiation (2008-2010) set as well.
 
-You can find the data at [https://portal.nersc.gov/project/ClimateNet/](https://portal.nersc.gov/project/ClimateNet/) and we provide a notebook to download the data automatically in the data/ folder.
+You can find the data at [https://portal.nersc.gov/project/ClimateNet/](https://portal.nersc.gov/project/ClimateNet/) and we provide a notebook to download the data automatically in the `data/` folder.
 
 
 ## ClimateNet CGNet implementation
@@ -96,17 +114,12 @@ We present our results in the video above and summarize them in this chart.
 
 ![](<results.png>)
 
-Select experiments we performed and models we trained are reported in the experiments/ and models/ directories.
-
+Select experiments we performed and models we trained are reported in the `experiments/` and `models/` directories.
 
 ## References
 
-Human-labled ClimateNet dataset: https://gmd.copernicus.org/articles/14/107/2021/
+Methods: _Lukas Kapp-Schwoerer, Andre Graubner, Sol Kim, and Karthik Kashinath. Spatio-temporal segmentation and tracking of weather patterns with light-weight neural networks. AI for Earth Sciences Workshop at NeurIPS 2020. [https://ai4earthscience.github.io/neurips-2020-workshop/papers/ai4earth_neurips_2020_55.pdf](https://ai4earthscience.github.io/neurips-2020-workshop/papers/ai4earth_neurips_2020_55.pdf)._
 
-Methods: https://ai4earthscience.github.io/neurips-2020-workshop/papers/ai4earth_neurips_2020_55.pdf
+Human-labled ClimateNet dataset: _Prabhat, K. Kashinath, M. Mudigonda, S. Kim, L. Kapp-Schwoerer, A. Graubner, E. Karaismailoglu, L. von Kleist, T. Kurth, A. Greiner, A. Mahesh, K. Yang, C. Lewis, J. Chen, A. Lou, S. Chandran, B. Toms, W. Chapman, K. Dagon, C. A. Shields, T. O’Brien, M. Wehner, and W. Collins. Climatenet: an expert-labeled open dataset and deep learning architecture for enabling high-precision analyses of extreme weather, 2021. [https: //gmd.copernicus.org/articles/14/107/2021/](https: //gmd.copernicus.org/articles/14/107/2021/)._
 
-_Lukas Kapp-Schwoerer, Andre Graubner, Sol Kim, and Karthik Kashinath. Spatio-temporal segmentation and tracking of weather patterns with light-weight neural networks. AI for Earth Sciences Workshop at NeurIPS 2020. [https://ai4earthscience.github.io/neurips-2020-workshop/papers/ai4earth_neurips_2020_55.pdf](https://ai4earthscience.github.io/neurips-2020-workshop/papers/ai4earth_neurips_2020_55.pdf)._
-
-_Prabhat, K. Kashinath, M. Mudigonda, S. Kim, L. Kapp-Schwoerer, A. Graubner, E. Karaismailoglu, L. von Kleist, T. Kurth, A. Greiner, A. Mahesh, K. Yang, C. Lewis, J. Chen, A. Lou, S. Chandran, B. Toms, W. Chapman, K. Dagon, C. A. Shields, T. O’Brien, M. Wehner, and W. Collins. Climatenet: an expert-labeled open dataset and deep learning architecture for enabling high-precision analyses of extreme weather, 2021. [https: //gmd.copernicus.org/articles/14/107/2021/](https: //gmd.copernicus.org/articles/14/107/2021/)._
-
-_Tianyi Wu, Sheng Tang, Rui Zhang, Juan Cao, and Yongdong Zhang. CGNet: A light-weight context guided network for semantic segmentation. IEEE Transactions on Image Processing, 30:1169–1179, 2021. doi: 10.1109/TIP.2020.3042065. [https://github.com/wutianyiRosun/CGNet](https://github.com/wutianyiRosun/CGNet)._
+Origial CGNet paper: _Tianyi Wu, Sheng Tang, Rui Zhang, Juan Cao, and Yongdong Zhang. CGNet: A light-weight context guided network for semantic segmentation. IEEE Transactions on Image Processing, 30:1169–1179, 2021. doi: 10.1109/TIP.2020.3042065. [https://github.com/wutianyiRosun/CGNet](https://github.com/wutianyiRosun/CGNet)._

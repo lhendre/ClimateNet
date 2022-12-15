@@ -11,8 +11,8 @@ from os import path
 config = Config('config-ablation-TMQ.json')
 cgnet = CGNet(config)
 
-train_path = 'Data/engineered'
-inference_path = 'Data'
+train_path = '../Data/engineered'
+inference_path = '../Data'
 
 
 train = ClimateDatasetLabeled(path.join(train_path, 'train'), config)

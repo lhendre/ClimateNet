@@ -24,7 +24,7 @@ train = ClimateDatasetLabeled(path.join(data_path, 'train'), config)
 val = ClimateDatasetLabeled(path.join(data_path, 'val'), config)
 train_history = cgnet.train(train, val)
 
-# Evaluate performance
+# Evaluate model performance
 test = ClimateDatasetLabeled(path.join(data_path, 'test'), config)
 test_history = cgnet.evaluate(test)
 

@@ -232,16 +232,8 @@ class CGNet():
         epoch_loader = tqdm(loader, leave=True)
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
-        coords, dims, batch_attrs = None, None, None
+        predictions = []
 
-        for batch in epoch_loader:
-            coords = batch.coords
-            del coords['variable']
-            dims = [dim for dim in batch.dims if dim != "variable"]
-            batch_attrs = batch.attrs
-
-        predictions = xr.DataArray(np.empty((4, 768, 1152)), coords=coords, dims=dims, attrs=batch_attrs)
-        # predictions = []
         for batch in epoch_loader:
             features = torch.tensor(batch.values)
             features = features.to(device)
@@ -254,9 +246,7 @@ class CGNet():
             del coords['variable']
             dims = [dim for dim in batch.dims if dim != "variable"]
 
-            predictions = xr.concat([predictions, xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs)], dim="time")
-            # predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
-            batch_attrs = batch.attrs
+            predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
 
         self.map_channel(predictions, "LABELS")
 

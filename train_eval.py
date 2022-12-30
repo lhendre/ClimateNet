@@ -32,13 +32,16 @@ cgnet.save_model(path.join('models', model_path))
 # use a saved model with
 # cgnet.load_model(model_path)
 
-class_masks = cgnet.predict(inference)  # masks with 1==TC, 2==AR
 
 # Evaluate performance
 test = ClimateDatasetLabeled(path.join(data_path, 'test'), config)
 test_history = cgnet.evaluate(test)
 
+class_masks = cgnet.predict(inference)  # masks with 1==TC, 2==AR
+
 # # Save model weights
+
+
 cgnet.save_model(model_path)
 #
 # # Save training history

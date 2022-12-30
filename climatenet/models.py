@@ -207,6 +207,8 @@ class CGNet():
         # Return training history
         return history
 
+    #Chooses time stamps to generate a mapping of predictions.  Randomly
+    #defaults to 1, 4, 8 and 11
     def map_channel(self, ds, metric, lon=-80, lat=35, timesteps=[1, 4, 8, 11]):
         samp = ds.isel(time=timesteps)
         p = samp.plot(

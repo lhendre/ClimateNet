@@ -1,11 +1,7 @@
 
 # Models
 
-<<<<<<< HEAD
 ## Results
-=======
-## Experiments
->>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650
 
 We trained and report here the following models:
 
@@ -18,7 +14,6 @@ We trained and report here the following models:
 7. Model 3 + weighted Jaccard loss 
 
 For each model, we provide:
-<<<<<<< HEAD
 - config.json: configuration file to load the model
 - weights.pth: trained weights ready to use for predictions
 - history.csv: complete training, validation and test metrics history
@@ -48,19 +43,6 @@ Reference: https://github.com/TylerYep/torchinfo
 =================================================================================================================================================
 Layer (type:depth-idx)                        Input Shape               Output Shape              Param #                   Mult-Adds
 =================================================================================================================================================
-=======
-- config.json: configuration file for loading
-- weights.pth: trained weights ready to use for predictions
-- history.csv: complete training, validation and test metrics
-
-
-## CGNet Architecture
-
-```
-========================================================================================================================================
-Layer (type:depth-idx)                        Input Shape               Output Shape              Param #                   Mult-Adds
-========================================================================================================================================
->>>>>>> 44aeec3f342e41c38d8f8d24908ca17ac0790650
 CGNetModule                                   [4, 4, 768, 1152]         [4, 3, 768, 1152]         --                        --
 ├─ConvBNPReLU: 1-1                            [4, 4, 768, 1152]         [4, 32, 384, 576]         --                        --
 │    └─Wrap: 2-1                              [4, 4, 768, 1152]         [4, 4, 770, 1154]         --                        --

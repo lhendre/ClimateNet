@@ -26,8 +26,8 @@ We provide **print.py**, a script that uses the Torchinfo package to print the d
 Syntax:
 
 ```
-$ print.py --model_path <model_path> -data_path <data_path> --level <level> 
-$ print.py -m <model_path> -d <data_path> -l <level>
+$ python print.py --model_path <model_path> -data_path <data_path> --level <level> 
+$ python print.py -m <model_path> -d <data_path> -l <level>
 
 <model_path>: path to folder containing config.json describing the model 
 <data_path>: path folder containing dataset with corresponding layers

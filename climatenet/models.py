@@ -129,6 +129,7 @@ class CGNet():
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
+            val_loss=epoch_loss
             training_confusion_matrix = 100*train_aggregate_cm/np.sum(train_aggregate_cm)
             train_ious = get_iou_perClass(train_aggregate_cm)
             train_dices = get_dice_perClass(train_aggregate_cm)

@@ -110,7 +110,7 @@ Pre-trained weights available at [https://portal.nersc.gov/project/ClimateNet/cl
 
 ## Results
 
-We present our results in the video above and summarize them in this chart.
+Previous baseline results can be seen in the chart below
 
 ![](<results.png>)
 

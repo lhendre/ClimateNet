@@ -1,4 +1,4 @@
-# CS230 Semantic Segmentation of Extreme Climate Events
+# CS231 Semantic Segmentation of Extreme Climate Events
 
 Tropical cyclones (TCs), also known as hurricanes, typhoons or tropical storms, are the most destructive type of extreme weather events and have caused $1.1 trillion in damage and 6,697 deaths since 1980 in the US alone. 
 

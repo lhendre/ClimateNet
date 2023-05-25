@@ -3,8 +3,8 @@
 Tropical cyclones (TCs), also known as hurricanes, typhoons or tropical storms, are the most destructive type of extreme weather events and have caused $1.1 trillion in damage and 6,697 deaths since 1980 in the US alone. 
 
 In this project, we apply the light-weight CGNet context guided computer vision architecture to semantic segmentation for the identification of tropical cyclones in climate simulations data.
-
-https://user-images.githubusercontent.com/3156495/207959086-e1a2e246-b863-4420-8275-b76c4877ba6d.mp4
+<!-- 
+https://user-images.githubusercontent.com/3156495/207959086-e1a2e246-b863-4420-8275-b76c4877ba6d.mp4 -->
 
 ## Getting started
 

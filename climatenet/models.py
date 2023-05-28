@@ -108,7 +108,7 @@ class CGNet():
                 labels = labels.unsqueeze(1)  # Add a new dimension for timesteps
                 labels = labels.permute(1, 0, 2, 3)  # Move the timesteps dimension to the front
                 labels = labels.contiguous().view(-1, 768, 1152)  # Reshape to (batch_size, height, width)
-                
+
                 # Move dataset to GPU if available
                 features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)

@@ -412,6 +412,8 @@ class CGNetModule(nn.Module):
         else:
             self.classifier = nn.Sequential(Conv(256, classes, 1, 1))
 
+        self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+
         #init weights
         for m in self.modules():
             classname = m.__class__.__name__
@@ -427,41 +429,63 @@ class CGNetModule(nn.Module):
     def forward(self, input):
         """
         args:
-            input: Receives the input RGB image
+            input: Receives the input RGB image with shape (batch_size, channels, timesteps, height, width)
             return: segmentation map
         """
-        # stage 1
-        output0 = self.level1_0(input)
-        output0 = self.level1_1(output0)
-        output0 = self.level1_2(output0)
-        inp1 = self.sample1(input)
-        inp2 = self.sample2(input)
+        batch_size, channels, timesteps, height, width = input.size()
 
-        # stage 2
-        output0_cat = self.b1(torch.cat([output0, inp1], 1))
-        output1_0 = self.level2_0(output0_cat) # down-sampled
+        # Reshape input to combine batch and time dimensions
+        input = input.view(batch_size * timesteps, channels, height, width)
 
-        for i, layer in enumerate(self.level2):
-            if i==0:
-                output1 = layer(output1_0)
-            else:
-                output1 = layer(output1)
+        # Apply temporal convolutional layer to capture temporal dependencies
+        input = self.temporal_conv(input)
 
-        output1_cat = self.bn_prelu_2(torch.cat([output1,  output1_0, inp2], 1))
+        # Reshape input back to original shape
+        input = input.view(batch_size, timesteps, channels, height, width)
 
-        # stage 3
-        output2_0 = self.level3_0(output1_cat) # down-sampled
-        for i, layer in enumerate(self.level3):
-            if i==0:
-                output2 = layer(output2_0)
-            else:
-                output2 = layer(output2)
+        # Iterate over each timestep
+        output = []
+        for t in range(timesteps):
+            # Select input at current timestep
+            input_t = input[:, t, :, :, :]
 
-        output2_cat = self.bn_prelu_3(torch.cat([output2_0, output2], 1))
+            # Stage 1
+            output0 = self.level1_0(input_t)
+            output0 = self.level1_1(output0)
+            output0 = self.level1_2(output0)
+            inp1 = self.sample1(input_t)
+            inp2 = self.sample2(input_t)
 
-        # classifier
-        classifier = self.classifier(output2_cat)
+            # Stage 2
+            output0_cat = self.b1(torch.cat([output0, inp1], 1))
+            output1_0 = self.level2_0(output0_cat)  # down-sampled
 
-        # upsample segmentation map ---> the input image size
-        out = F.interpolate(classifier, input.size()[2:], mode='bilinear',align_corners = False)   #Upsample score map, factor=8
-        return out
+            for i, layer in enumerate(self.level2):
+                if i == 0:
+                    output1 = layer(output1_0)
+                else:
+                    output1 = layer(output1)
+
+            output1_cat = self.bn_prelu_2(torch.cat([output1, output1_0, inp2], 1))
+
+            # Stage 3
+            output2_0 = self.level3_0(output1_cat)  # down-sampled
+            for i, layer in enumerate(self.level3):
+                if i == 0:
+                    output2 = layer(output2_0)
+                else:
+                    output2 = layer(output2)
+
+            output2_cat = self.bn_prelu_3(torch.cat([output2_0, output2], 1))
+
+            # Classifier
+            classifier = self.classifier(output2_cat)
+
+            # Upsample segmentation map to input size
+            out_t = F.interpolate(classifier, input.size()[3:], mode='bilinear', align_corners=False)
+            output.append(out_t)
+
+        # Stack outputs across the time dimension
+        output = torch.stack(output, dim=1)
+
+        return output

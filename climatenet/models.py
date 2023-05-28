@@ -58,7 +58,7 @@ class CGNet():
                 N=self.config.N
                 M=self.config.M
 
-            self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)),,M=M,N=N)
+            self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)),M=M,N=N)
         elif model_path is not None:
             # Load model
             self.config = Config(path.join(model_path, 'config.json'))

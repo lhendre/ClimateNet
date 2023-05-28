@@ -99,13 +99,17 @@ class CGNet():
             epoch_loss = 0.
             train_loss = 0.
 
-            for batch in epoch_loader:
+        for features, labels in epoch_loader:
                 # Move dataset to GPU if available
-                features = batch["features"].to(device)
-                labels = batch["labels"].to(device)
+                features = torch.tensor(features.values)
+                labels = torch.tensor(labels.values)
+
+                features = features.to(device)
+                labels = labels.to(device)
 
                 # Forward pass
                 outputs = torch.softmax(self.network(features), dim=1)
+                outputs = outputs.to(device)
 
                 # Update training confusion matrix
                 predictions = torch.max(outputs, 1)[1]
@@ -201,8 +205,8 @@ class CGNet():
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         predictions = []
-        for batch in epoch_loader:
-            features = batch["features"]
+        for features, labels in epoch_loader:
+            batch = features
             features = torch.tensor(features.values)
             features = features.to(device)
 
@@ -271,9 +275,7 @@ class CGNet():
         epoch_loss = 0.
         num_minibatches = len(loader)
 
-        for batch in epoch_loader:
-            features = batch["features"]
-            labels = batch["labels"]
+        for features, labels in epoch_loader:
 
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)

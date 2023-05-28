@@ -52,7 +52,13 @@ class CGNet():
         if config is not None:
             # Create new model
             self.config = config
-            self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)))
+             M=3
+             N=21
+            if self.config.N is not None:
+                N=self.config.N
+                M=self.config.M
+
+            self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)),M,N)
         elif model_path is not None:
             # Load model
             self.config = Config(path.join(model_path, 'config.json'))

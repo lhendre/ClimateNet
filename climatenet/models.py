@@ -99,18 +99,13 @@ class CGNet():
             epoch_loss = 0.
             train_loss = 0.
 
-            for features, labels in epoch_loader:
-
+            for batch in epoch_loader:
                 # Move dataset to GPU if available
-                features = torch.tensor(features.values)
-                labels = torch.tensor(labels.values)
-
-                features = features.to(device)
-                labels = labels.to(device)
+                features = batch["features"].to(device)
+                labels = batch["labels"].to(device)
 
                 # Forward pass
-                outputs = torch.softmax(self.network(features), 1)
-                outputs = outputs.to(device)
+                outputs = torch.softmax(self.network(features), dim=1)
 
                 # Update training confusion matrix
                 predictions = torch.max(outputs, 1)[1]
@@ -206,8 +201,8 @@ class CGNet():
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         predictions = []
-        for features, labels in epoch_loader:
-            batch = features
+        for batch in epoch_loader:
+            features = batch["features"]
             features = torch.tensor(features.values)
             features = features.to(device)
 
@@ -276,7 +271,9 @@ class CGNet():
         epoch_loss = 0.
         num_minibatches = len(loader)
 
-        for features, labels in epoch_loader:
+        for batch in epoch_loader:
+            features = batch["features"]
+            labels = batch["labels"]
 
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
@@ -292,9 +289,7 @@ class CGNet():
             test_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += test_loss.item()
 
-            epoch_loss += test_loss.item()
-
-        # Compute and track evaluation stats
+    # Compute and track evaluation stats
         epoch_loss /= num_minibatches
         test_confusion_matrix = 100*aggregate_cm/np.sum(aggregate_cm)
         test_precision, test_recall, test_specificity, test_sensitivity = get_confusion_metrics(aggregate_cm)
@@ -302,15 +297,15 @@ class CGNet():
         test_dices = get_dice_perClass(aggregate_cm)
 
         history = pd.DataFrame.from_dict({'evaluation_loss': [epoch_loss],
-                                  'evaluation_confusion_matrix': [np.array(test_confusion_matrix)],
-                                  'test_ious': [test_ious],
-                                  'test_dices': [test_dices],
-                                  'test_precision': [test_precision],
-                                  'test_recall': [test_recall],
-                                  'test_specificity': [test_specificity],
-                                  'test_sensitivity': [test_sensitivity]})
+                              'evaluation_confusion_matrix': [np.array(test_confusion_matrix)],
+                              'test_ious': [test_ious],
+                              'test_dices': [test_dices],
+                              'test_precision': [test_precision],
+                              'test_recall': [test_recall],
+                              'test_specificity': [test_specificity],
+                              'test_sensitivity': [test_sensitivity]})
 
-        # Evaluation stats reporting:
+    # Evaluation stats reporting:
         print(f'\nTest loss: {epoch_loss:.5f} ({self.config.loss})')
         print('Classes:      [    BG         TCs        ARs   ]')
         print('IoUs:        ', test_ious, ' | Mean: ', test_ious.mean())

@@ -83,7 +83,7 @@ class CGNet():
         self.network.to(device)
 
         collate = ClimateDatasetLabeled.collate
-        loader = DataLoader(train_dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=True)
+        loader = DataLoader(train_dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=False)
 
         # Prepare scheduler
         best_val_loss = float("inf")
@@ -100,7 +100,15 @@ class CGNet():
             train_loss = 0.
 
             for features, labels in epoch_loader:
+                features = features.unsqueeze(2)  # Add a new dimension for timesteps
+                features = features.permute(1, 0, 2, 3, 4)  # Move the timesteps dimension to the front
+                features = features.contiguous().view(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
 
+# Reshape labels tensor
+                labels = labels.unsqueeze(1)  # Add a new dimension for timesteps
+                labels = labels.permute(1, 0, 2, 3)  # Move the timesteps dimension to the front
+                labels = labels.contiguous().view(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+                
                 # Move dataset to GPU if available
                 features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)
@@ -113,7 +121,7 @@ class CGNet():
                 outputs = outputs.to(device)
 
                 # Update training confusion matrix
-                predictions = torch.max(outputs, 1)[1]
+                predictions = torch.argmax(outputs, 1)
                 train_aggregate_cm += get_cm(predictions, labels, 3)
 
                 # Backward pass
@@ -405,6 +413,7 @@ class CGNetModule(nn.Module):
         for i in range(0, N-1):
             self.level3.append(ContextGuidedBlock(128 , 128, dilation_rate=4, reduction=16)) # CG block
         self.bn_prelu_3 = BNPReLU(256)
+        self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 3, 3), padding=(1, 1, 1))
 
         if dropout_flag:
             print("have dropout layer")
@@ -425,43 +434,38 @@ class CGNetModule(nn.Module):
                         m.bias.data.zero_()
 
     def forward(self, input):
-        """
-        args:
-            input: Receives the input RGB image
-            return: segmentation map
-        """
-        # stage 1
+        # Temporal convolution
+        temporal_input = input.unsqueeze(2)  # Add a temporal dimension
+        temporal_output = self.temporal_conv(temporal_input)
+        input = temporal_output.squeeze(2)  # Remove the temporal dimension
+
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)
         output0 = self.level1_2(output0)
         inp1 = self.sample1(input)
         inp2 = self.sample2(input)
 
-        # stage 2
         output0_cat = self.b1(torch.cat([output0, inp1], 1))
-        output1_0 = self.level2_0(output0_cat) # down-sampled
+        output1_0 = self.level2_0(output0_cat)
 
         for i, layer in enumerate(self.level2):
-            if i==0:
+            if i == 0:
                 output1 = layer(output1_0)
             else:
                 output1 = layer(output1)
 
-        output1_cat = self.bn_prelu_2(torch.cat([output1,  output1_0, inp2], 1))
+        output1_cat = self.bn_prelu_2(torch.cat([output1, output1_0, inp2], 1))
 
-        # stage 3
-        output2_0 = self.level3_0(output1_cat) # down-sampled
+        output2_0 = self.level3_0(output1_cat)
         for i, layer in enumerate(self.level3):
-            if i==0:
+            if i == 0:
                 output2 = layer(output2_0)
             else:
                 output2 = layer(output2)
 
         output2_cat = self.bn_prelu_3(torch.cat([output2_0, output2], 1))
 
-        # classifier
         classifier = self.classifier(output2_cat)
 
-        # upsample segmentation map ---> the input image size
-        out = F.interpolate(classifier, input.size()[2:], mode='bilinear',align_corners = False)   #Upsample score map, factor=8
+        out = F.interpolate(classifier, input.size()[2:], mode='bilinear', align_corners=False)
         return out

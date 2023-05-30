@@ -103,14 +103,14 @@ class CGNet():
                 features_np = features.values
                 features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
                 features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
-                features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+                features_np = features_np.reshape(-1, 2, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
                 features = torch.tensor(features_np)
 
 # Reshape labels tensor
                 labels_np = labels.values
                 labels_np = np.expand_dims(labels_np, axis=1)  # Add a new dimension for timesteps
                 labels_np = np.transpose(labels_np, (1, 0, 2, 3))  # Move the timesteps dimension to the front
-                labels_np = labels_np.reshape(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+                labels_np = labels_np.reshape(-1, 2, 768, 1152)  # Reshape to (batch_size, height, width)
                 labels = torch.tensor(labels_np)
 
                 features = features.to(device)
@@ -219,7 +219,7 @@ class CGNet():
             features_np = features.values
             features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
             features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
-            features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+            features_np = features_np.reshape(-1, 2, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
             features = torch.tensor(features_np)
             labels = torch.tensor(labels_np)
             features = features.to(device)
@@ -258,14 +258,14 @@ class CGNet():
             features_np = features.values
             features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
             features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
-            features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+            features_np = features_np.reshape(-1, 2, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
             features = torch.tensor(features_np)
 
 # Reshape labels tensor
             labels_np = labels.values
             labels_np = np.expand_dims(labels_np, axis=1)  # Add a new dimension for timesteps
             labels_np = np.transpose(labels_np, (1, 0, 2, 3))  # Move the timesteps dimension to the front
-            labels_np = labels_np.reshape(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+            labels_np = labels_np.reshape(-1, 2, 768, 1152)  # Reshape to (batch_size, height, width)
             labels = torch.tensor(labels_np)
 
             features = features.to(device)
@@ -304,14 +304,14 @@ class CGNet():
             features_np = features.values
             features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
             features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
-            features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+            features_np = features_np.reshape(-1, 2, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
             features = torch.tensor(features_np)
 
 # Reshape labels tensor
             labels_np = labels.values
             labels_np = np.expand_dims(labels_np, axis=1)  # Add a new dimension for timesteps
             labels_np = np.transpose(labels_np, (1, 0, 2, 3))  # Move the timesteps dimension to the front
-            labels_np = labels_np.reshape(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+            labels_np = labels_np.reshape(-1, 2, 768, 1152)  # Reshape to (batch_size, height, width)
             labels = torch.tensor(labels_np)
 
             features = features.to(device)

@@ -100,18 +100,18 @@ class CGNet():
             train_loss = 0.
 
             for features, labels in epoch_loader:
-                features = features.unsqueeze(2)  # Add a new dimension for timesteps
-                features = features.permute(1, 0, 2, 3, 4)  # Move the timesteps dimension to the front
-                features = features.contiguous().view(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+                features_np = features.values
+                features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
+                features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
+                features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+                features = torch.tensor(features_np)
 
 # Reshape labels tensor
-                labels = labels.unsqueeze(1)  # Add a new dimension for timesteps
-                labels = labels.permute(1, 0, 2, 3)  # Move the timesteps dimension to the front
-                labels = labels.contiguous().view(-1, 768, 1152)  # Reshape to (batch_size, height, width)
-
-                # Move dataset to GPU if available
-                features = torch.tensor(features.values)
-                labels = torch.tensor(labels.values)
+                labels_np = labels.values
+                labels_np = np.expand_dims(labels_np, axis=1)  # Add a new dimension for timesteps
+                labels_np = np.transpose(labels_np, (1, 0, 2, 3))  # Move the timesteps dimension to the front
+                labels_np = labels_np.reshape(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+                labels = torch.tensor(labels_np)
 
                 features = features.to(device)
                 labels = labels.to(device)
@@ -216,8 +216,12 @@ class CGNet():
         predictions = []
         for features, labels in epoch_loader:
             batch = features
-            features = torch.tensor(features.values)
-            features = features.to(device)
+            features_np = features.values
+            features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
+            features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
+            features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+            features = torch.tensor(features_np)
+            labels = torch.tensor(labels_np)            features = features.to(device)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -250,8 +254,18 @@ class CGNet():
 
         for features, labels in epoch_loader:
 
-            features = torch.tensor(features.values)
-            labels = torch.tensor(labels.values)
+            features_np = features.values
+            features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
+            features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
+            features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+            features = torch.tensor(features_np)
+
+# Reshape labels tensor
+            labels_np = labels.values
+            labels_np = np.expand_dims(labels_np, axis=1)  # Add a new dimension for timesteps
+            labels_np = np.transpose(labels_np, (1, 0, 2, 3))  # Move the timesteps dimension to the front
+            labels_np = labels_np.reshape(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+            labels = torch.tensor(labels_np)
 
             features = features.to(device)
             labels = labels.to(device)
@@ -286,8 +300,18 @@ class CGNet():
 
         for features, labels in epoch_loader:
 
-            features = torch.tensor(features.values)
-            labels = torch.tensor(labels.values)
+            features_np = features.values
+            features_np = np.expand_dims(features_np, axis=2)  # Add a new dimension for timesteps
+            features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
+            features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
+            features = torch.tensor(features_np)
+
+# Reshape labels tensor
+            labels_np = labels.values
+            labels_np = np.expand_dims(labels_np, axis=1)  # Add a new dimension for timesteps
+            labels_np = np.transpose(labels_np, (1, 0, 2, 3))  # Move the timesteps dimension to the front
+            labels_np = labels_np.reshape(-1, 768, 1152)  # Reshape to (batch_size, height, width)
+            labels = torch.tensor(labels_np)
 
             features = features.to(device)
             labels = labels.to(device)
@@ -363,7 +387,7 @@ class CGNet():
 
         # Load data for a forward pass
         collate = ClimateDatasetLabeled.collate
-        loader = DataLoader(dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=True)
+        loader = DataLoader(dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=False)
 
         # Print summary using 'torchinfo'
         summary(self.network, \

@@ -461,7 +461,7 @@ class CGNetModule(nn.Module):
     def forward(self, input):
         # Temporal convolution
         # temporal_input = input.unsqueeze(2)  # Add a temporal dimension
-        temporal_output = self.temporal_conv(temporal_input)
+        temporal_output = self.temporal_conv(input)
         input = temporal_output.squeeze(2)  # Remove the temporal dimension
 
         output0 = self.level1_0(input)

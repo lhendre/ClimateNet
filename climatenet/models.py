@@ -221,7 +221,8 @@ class CGNet():
             features_np = np.transpose(features_np, (1, 0, 2, 3, 4))  # Move the timesteps dimension to the front
             features_np = features_np.reshape(-1, 5, 768, 1152)  # Reshape to (batch_size, num_channels, height, width)
             features = torch.tensor(features_np)
-            labels = torch.tensor(labels_np)            features = features.to(device)
+            labels = torch.tensor(labels_np)
+            features = features.to(device)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -459,7 +460,7 @@ class CGNetModule(nn.Module):
 
     def forward(self, input):
         # Temporal convolution
-        temporal_input = input.unsqueeze(2)  # Add a temporal dimension
+        # temporal_input = input.unsqueeze(2)  # Add a temporal dimension
         temporal_output = self.temporal_conv(temporal_input)
         input = temporal_output.squeeze(2)  # Remove the temporal dimension
 

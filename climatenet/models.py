@@ -113,7 +113,7 @@ class CGNet():
                 print("features",features.shape)
             # Adjust dimensions to incorporate previous timestep's features
                 if prev_features is not None:
-                    features = torch.cat((prev_features, features), dim=0)
+                    features = torch.cat((prev_features, features), dim=1)
 
                 features = features.to(device)
                 labels = labels.to(device)
@@ -127,7 +127,7 @@ class CGNet():
                 height=768
                 width=1152
                 outputs = outputs.view(-1, num_timesteps, num_classes, height, width)  # Reshape to (batch_size, num_timesteps, num_classes, height, width)
-                # outputs = outputs[:, -1]  # Take only the last timestep for predictions
+                outputs = outputs[:, -1]  # Take only the last timestep for predictions
                 outputs = outputs.to(device)
 
                 # Update training confusion matrix
@@ -144,7 +144,7 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-                prev_features = features[-1:, :, :, :].clone()
+                prev_features = features[:,-1:, :, :].clone()
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches

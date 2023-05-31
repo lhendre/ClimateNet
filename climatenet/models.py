@@ -99,7 +99,7 @@ class CGNet():
             num_minibatches = len(loader)
             epoch_loss = 0.
             train_loss = 0.
-
+            prev_features = None
             for features, labels in epoch_loader:
 
                 # Move dataset to GPU if available
@@ -108,16 +108,21 @@ class CGNet():
 
                 features = features.to(device)
                 labels = labels.to(device)
-
+                if prev_features is not None:
+                  print("Prev",prev_features.shape)
+                print("features",features.shape)
             # Adjust dimensions to incorporate previous timestep's features
                 if prev_features is not None:
-                    features = torch.cat((prev_features, features), dim=1)
+                    features = torch.cat((prev_features, features), dim=0)
 
                 features = features.to(device)
                 labels = labels.to(device)
 
                 # Forward pass
+                print("features ",features,features.shape)
                 outputs = torch.softmax(self.network(features), 1)
+                print("outputs shape:",outputs.shape)
+                num_timesteps=8
                 outputs = outputs.view(-1, num_timesteps, num_classes, height, width)  # Reshape to (batch_size, num_timesteps, num_classes, height, width)
                 outputs = outputs[:, -1]  # Take only the last timestep for predictions
                 outputs = outputs.to(device)
@@ -136,7 +141,7 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-                prev_features = features[:, -1:, :, :].clone()
+                prev_features = features[-1:, :, :, :].clone()
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches

@@ -108,8 +108,17 @@ class CGNet():
                 features = features.to(device)
                 labels = labels.to(device)
 
+            # Adjust dimensions to incorporate previous timestep's features
+                if prev_features is not None:
+                    features = torch.cat((prev_features, features), dim=1)
+
+                features = features.to(device)
+                labels = labels.to(device)
+
                 # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
+                outputs = outputs.view(-1, num_timesteps, num_classes, height, width)  # Reshape to (batch_size, num_timesteps, num_classes, height, width)
+                outputs = outputs[:, -1]  # Take only the last timestep for predictions
                 outputs = outputs.to(device)
 
                 # Update training confusion matrix
@@ -126,6 +135,7 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+                prev_features = features[:, -1:, :, :].clone()
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -382,6 +392,7 @@ class CGNetModule(nn.Module):
           N: the number of blocks in stage 3
         """
         super().__init__()
+        self.channels = channels  # Save the number of input channels
 
         self.level1_0 = ConvBNPReLU(channels, 32, 3, 2)      # feature map size divided 2, 1/2
         self.level1_1 = ConvBNPReLU(32, 32, 3, 1)
@@ -405,6 +416,7 @@ class CGNetModule(nn.Module):
         for i in range(0, N-1):
             self.level3.append(ContextGuidedBlock(128 , 128, dilation_rate=4, reduction=16)) # CG block
         self.bn_prelu_3 = BNPReLU(256)
+        self.conv_temporal = nn.Conv2d(channels, channels, kernel_size=(3, 3), padding=(1, 1), bias=False)
 
         if dropout_flag:
             print("have dropout layer")
@@ -431,6 +443,8 @@ class CGNetModule(nn.Module):
             return: segmentation map
         """
         # stage 1
+        input = self.conv_temporal(input)
+
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)
         output0 = self.level1_2(output0)
@@ -438,7 +452,7 @@ class CGNetModule(nn.Module):
         inp2 = self.sample2(input)
 
         # stage 2
-        output0_cat = self.b1(torch.cat([output0, inp1], 1))
+        output0_cat = self.b1(torch.cat([output0, inp1, input], 1))
         output1_0 = self.level2_0(output0_cat) # down-sampled
 
         for i, layer in enumerate(self.level2):

@@ -123,8 +123,11 @@ class CGNet():
                 outputs = torch.softmax(self.network(features), 1)
                 print("outputs shape:",outputs.shape)
                 num_timesteps=8
+                num_classes=3
+                height=768
+                width=1152
                 outputs = outputs.view(-1, num_timesteps, num_classes, height, width)  # Reshape to (batch_size, num_timesteps, num_classes, height, width)
-                outputs = outputs[:, -1]  # Take only the last timestep for predictions
+                # outputs = outputs[:, -1]  # Take only the last timestep for predictions
                 outputs = outputs.to(device)
 
                 # Update training confusion matrix

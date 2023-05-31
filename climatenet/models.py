@@ -88,6 +88,7 @@ class CGNet():
         # Prepare scheduler
         best_val_loss = float("inf")
         no_improvement_counter = 0
+        prev_features = None
 
         # Loop over epochs
         for epoch in range(1, self.config.epochs+1):
@@ -452,7 +453,7 @@ class CGNetModule(nn.Module):
         inp2 = self.sample2(input)
 
         # stage 2
-        output0_cat = self.b1(torch.cat([output0, inp1, input], 1))
+        output0_cat = self.b1(torch.cat([output0, inp1], 1))
         output1_0 = self.level2_0(output0_cat) # down-sampled
 
         for i, layer in enumerate(self.level2):

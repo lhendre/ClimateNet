@@ -46,6 +46,8 @@ class Config():
         self.save_epochs = self.config_dict.get('save_epochs', False)
         self.scheduler = self.config_dict.get('scheduler', False)
         self.augment = self.config_dict.get('augment', False)
+        self.N = self.config_dict.get('N', False)
+        self.M = self.config_dict.get('M', False)
         # Make reproducible
         torch.manual_seed(self.seed)
         np.random.seed(self.seed)
@@ -53,4 +55,3 @@ class Config():
     def save(self, save_path: str):
         with open(save_path, 'w', encoding='utf-8') as f:
             json.dump(self.config_dict, f, ensure_ascii=False, indent=4)
-        

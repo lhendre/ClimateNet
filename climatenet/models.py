@@ -295,8 +295,6 @@ class CGNet():
 
             features = features.to(device)
             labels = labels.to(device)
-            if len(prev_features) != 0:
-            s1=0
 
             if features.shape[0]!=prev_features.shape[0]:
                 if prev_features.shape[0]>features.shape[0]:

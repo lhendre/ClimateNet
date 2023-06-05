@@ -32,6 +32,8 @@
         "Tropical Cyclone",
         "Atmospheric River"
     ],
+    "N":21,
+    "M":3,
     "loss": "weighted_jaccard",
     "scheduler": true,
     "description": "CGNet trained on engineered ClimateNet with weighted Jaccard loss and learning rate scheduling."

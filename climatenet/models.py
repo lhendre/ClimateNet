@@ -296,19 +296,21 @@ class CGNet():
             features = features.to(device)
             labels = labels.to(device)
 
-            if features.shape[0]!=prev_features.shape[0]:
-                if prev_features.shape[0]>features.shape[0]:
-                    s=8-features.shape[0]
-                    prev_features=prev_features[s:,:,:,:]
-                else:
-                    s=8-prev_features.shape[0]
+            if len(prev_features) != 0:
+
+                if features.shape[0]!=prev_features.shape[0]:
+                    if prev_features.shape[0]>features.shape[0]:
+                        s=8-features.shape[0]
+                        prev_features=prev_features[s:,:,:,:]
+                    else:
+                        s=8-prev_features.shape[0]
 
                     features=features[s:,:]
                     labels=labels[s:,:,:]
-                features = torch.stack((prev_features, features), dim=1)
+                    features = torch.stack((prev_features, features), dim=1)
             else:
-                # Handle the initial case
-                # Initialize prev_features with an empty tensor or duplicate the initial version
+                      # Handle the initial case
+                      # Initialize prev_features with an empty tensor or duplicate the initial version
                 prev_features = features.clone()  # Duplicate the initial version
                 features = torch.stack((prev_features, features), dim=1)
 
@@ -350,19 +352,21 @@ class CGNet():
 
             features = features.to(device)
             labels = labels.to(device)
-            if features.shape[0]!=prev_features.shape[0]:
-                if prev_features.shape[0]>features.shape[0]:
-                    s=8-features.shape[0]
-                    prev_features=prev_features[s:,:,:,:]
-                else:
-                    s=8-prev_features.shape[0]
+            if len(prev_features) != 0:
+
+                if features.shape[0]!=prev_features.shape[0]:
+                    if prev_features.shape[0]>features.shape[0]:
+                        s=8-features.shape[0]
+                        prev_features=prev_features[s:,:,:,:]
+                    else:
+                        s=8-prev_features.shape[0]
 
                     features=features[s:,:]
                     labels=labels[s:,:,:]
-                features = torch.stack((prev_features, features), dim=1)
+                    features = torch.stack((prev_features, features), dim=1)
             else:
-                # Handle the initial case
-                # Initialize prev_features with an empty tensor or duplicate the initial version
+                      # Handle the initial case
+                      # Initialize prev_features with an empty tensor or duplicate the initial version
                 prev_features = features.clone()  # Duplicate the initial version
                 features = torch.stack((prev_features, features), dim=1)
 
@@ -439,7 +443,7 @@ class CGNet():
 
         # Load data for a forward pass
         collate = ClimateDatasetLabeled.collate
-        loader = DataLoader(dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=True)
+        loader = DataLoader(dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=False)
 
         # Print summary using 'torchinfo'
         summary(self.network, \

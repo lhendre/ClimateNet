@@ -98,9 +98,13 @@ class CGNet():
             num_minibatches = len(loader)
             epoch_loss = 0.
             train_loss = 0.
-
+            count = 0
             for features, labels in epoch_loader:
-
+                copy_features = features
+                if count = 0:
+                    continue
+                count+=1
+                features=prev
                 # Move dataset to GPU if available
                 features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)
@@ -108,6 +112,18 @@ class CGNet():
                 features = features.to(device)
                 labels = labels.to(device)
 
+                if len(prev) != 0:
+                    s1=0
+
+                    if features.shape[0]!=prev_features.shape[0]:
+                      if prev.shape[0]>features.shape[0]:
+                        s=8-features.shape[0]
+                        prev=prev_features[s:,:,:,:]
+                      else:
+                        s=8-prev.shape[0]
+
+                        features=features[s:,:]
+                        labels=labels[s:,:,:]
                 # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
                 outputs = outputs.to(device)
@@ -126,6 +142,7 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+                prev=torch.tensor(copy_features.values)
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -206,10 +223,28 @@ class CGNet():
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         predictions = []
+        count = 0
         for features, labels in epoch_loader:
+            copy_features = features
+            if count = 0:
+                continue
+            count+=1
             batch = features
             features = torch.tensor(features.values)
             features = features.to(device)
+
+            if len(prev) != 0:
+                s1=0
+
+                if features.shape[0]!=prev_features.shape[0]:
+                    if prev.shape[0]>features.shape[0]:
+                        s=8-features.shape[0]
+                        prev=prev_features[s:,:,:,:]
+                    else:
+                        s=8-prev.shape[0]
+
+                    features=features[s:,:]
+                    labels=labels[s:,:,:]
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -220,6 +255,7 @@ class CGNet():
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
+            prev=torch.tensor(copy_features.values)
 
         print(predictions)
         return xr.concat(predictions, dim='time')
@@ -240,13 +276,30 @@ class CGNet():
         num_minibatches = len(loader)
         epoch_loss = 0.
 
+        count = 0
         for features, labels in epoch_loader:
-
+            copy_features = features
+            if count = 0:
+                continue
+            count+=1
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
             features = features.to(device)
             labels = labels.to(device)
+            if len(prev) != 0:
+                s1=0
+
+                if features.shape[0]!=prev_features.shape[0]:
+                    if prev.shape[0]>features.shape[0]:
+                        s=8-features.shape[0]
+                        prev=prev_features[s:,:,:,:]
+                    else:
+                        s=8-prev.shape[0]
+
+                    features=features[s:,:]
+                    labels=labels[s:,:,:]
+
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -255,6 +308,7 @@ class CGNet():
 
             val_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += val_loss.item()
+            prev=torch.tensor(copy_features.values)
 
         # Return validation stats:
         epoch_loss /= num_minibatches
@@ -276,13 +330,31 @@ class CGNet():
         epoch_loss = 0.
         num_minibatches = len(loader)
 
+        count = 0
         for features, labels in epoch_loader:
-
+            copy_features = features
+            if count = 0:
+                continue
+            count+=1
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
             features = features.to(device)
             labels = labels.to(device)
+
+            if len(prev) != 0:
+                s1=0
+
+                if features.shape[0]!=prev_features.shape[0]:
+                    if prev.shape[0]>features.shape[0]:
+                        s=8-features.shape[0]
+                        prev=prev_features[s:,:,:,:]
+                    else:
+                        s=8-prev.shape[0]
+
+                    features=features[s:,:]
+                    labels=labels[s:,:,:]
+                features = torch.stack((prev_features, features), dim=1)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -293,6 +365,7 @@ class CGNet():
             epoch_loss += test_loss.item()
 
             epoch_loss += test_loss.item()
+            prev=torch.tensor(copy_features.values)
 
         # Compute and track evaluation stats
         epoch_loss /= num_minibatches

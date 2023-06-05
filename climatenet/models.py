@@ -120,13 +120,16 @@ class CGNet():
 
                     if features.shape[0]!=prev_features.shape[0]:
                       if prev_features.shape[0]>features.shape[0]:
-                        s=8-features.shape[0]
+                        s=prev_features.shape[0]-features.shape[0]
                         prev_features=prev_features[s:,:,:,:]
                       else:
-                        s=8-prev_features.shape[0]
+                        s=features.shape[0]-prev_features.shape[0]
 
-                        features=features[s:,:]
+                        features=features[s:,:,:,:]
+
                         labels=labels[s:,:,:]
+                    prev_features = prev_features.to(device)
+
                     features = torch.stack((prev_features, features), dim=1)
                 else:
                       # Handle the initial case
@@ -151,7 +154,7 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-                torch.tensor(copy_features.values)
+                prev_features=torch.tensor(copy_features.values)
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -232,6 +235,8 @@ class CGNet():
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         predictions = []
+        prev_features = []
+
         for features, labels in epoch_loader:
             copy_features=features
             batch = features
@@ -242,20 +247,23 @@ class CGNet():
 
                 if features.shape[0]!=prev_features.shape[0]:
                   if prev_features.shape[0]>features.shape[0]:
-                    s=8-features.shape[0]
+                    s=prev_features.shape[0]-features.shape[0]
                     prev_features=prev_features[s:,:,:,:]
                   else:
-                    s=8-prev_features.shape[0]
+                    s=features.shape[0]-prev_features.shape[0]
 
-                    features=features[s:,:]
+                    features=features[s:,:,:,:]
                     labels=labels[s:,:,:]
+                prev_features = prev_features.to(device)
+
                 features = torch.stack((prev_features, features), dim=1)
             else:
                 # Handle the initial case
                 # Initialize prev_features with an empty tensor or duplicate the initial version
                 prev_features = features.clone()  # Duplicate the initial version
                 features = torch.stack((prev_features, features), dim=1)
-
+            if features.shape[0]==1:
+               continue
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
             preds = torch.max(outputs, 1)[1].cpu().numpy()
@@ -265,7 +273,7 @@ class CGNet():
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
-            torch.tensor(copy_features.values)
+            prev_features=torch.tensor(copy_features.values)
 
         print(predictions)
         return xr.concat(predictions, dim='time')
@@ -300,14 +308,16 @@ class CGNet():
 
                 if features.shape[0]!=prev_features.shape[0]:
                     if prev_features.shape[0]>features.shape[0]:
-                        s=8-features.shape[0]
+                        s=prev_features.shape[0]-features.shape[0]
                         prev_features=prev_features[s:,:,:,:]
                     else:
-                        s=8-prev_features.shape[0]
+                        s=features.shape[0]-prev_features.shape[0]
 
-                    features=features[s:,:]
-                    labels=labels[s:,:,:]
-                    features = torch.stack((prev_features, features), dim=1)
+                        features=features[s:,:,:,:]
+                        labels=labels[s:,:,:]
+                prev_features = prev_features.to(device)
+
+                features = torch.stack((prev_features, features), dim=1)
             else:
                       # Handle the initial case
                       # Initialize prev_features with an empty tensor or duplicate the initial version
@@ -321,7 +331,7 @@ class CGNet():
 
             val_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += val_loss.item()
-            torch.tensor(copy_features.values)
+            prev_features=torch.tensor(copy_features.values)
 
         # Return validation stats:
         epoch_loss /= num_minibatches
@@ -353,23 +363,31 @@ class CGNet():
             features = features.to(device)
             labels = labels.to(device)
             if len(prev_features) != 0:
-
+                print(prev_features.shape,features.shape)
                 if features.shape[0]!=prev_features.shape[0]:
                     if prev_features.shape[0]>features.shape[0]:
-                        s=8-features.shape[0]
+                        s=prev_features.shape[0]-features.shape[0]
                         prev_features=prev_features[s:,:,:,:]
-                    else:
-                        s=8-prev_features.shape[0]
+                        print("c:")
 
-                    features=features[s:,:]
-                    labels=labels[s:,:,:]
-                    features = torch.stack((prev_features, features), dim=1)
+                    else:
+                        s=features.shape[0]-prev_features.shape[0]
+
+                        features=features[s:,:,:,:]
+                        labels=labels[s:,:,:]
+                        print("B:")
+                prev_features = prev_features.to(device)
+
+                print(prev_features.shape,features.shape)
+                features = torch.stack((prev_features, features), dim=1)
             else:
                       # Handle the initial case
                       # Initialize prev_features with an empty tensor or duplicate the initial version
                 prev_features = features.clone()  # Duplicate the initial version
                 features = torch.stack((prev_features, features), dim=1)
-
+            print("SA",features.shape)
+            if features.shape[0]==1:
+               continue
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
             predictions = torch.max(outputs, 1)[1]
@@ -379,7 +397,7 @@ class CGNet():
             epoch_loss += test_loss.item()
 
             epoch_loss += test_loss.item()
-            torch.tensor(copy_features.values)
+            prev_features=torch.tensor(copy_features.values)
 
 
         # Compute and track evaluation stats

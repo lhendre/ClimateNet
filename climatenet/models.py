@@ -515,7 +515,7 @@ class CGNetModule(nn.Module):
         # self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 1, 1), padding=(1, 0, 0))
 # self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 1, 1), padding=(1, 0, 0))
         self.padding=(1,0,0)
-        self.temporal_conv = nn.Conv3d(2, 2, kernel_size=(3, 1, 1), padding=self.padding)
+        self.temporal_conv = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
 
         if dropout_flag:
             print("have dropout layer")
@@ -542,8 +542,8 @@ class CGNetModule(nn.Module):
             return: segmentation map
         """
         # stage 1
-        input_conv = self.temporal_conv(input)
-        input=input_conv[:,1:,:,:,:].squeeze()
+        input = self.temporal_conv(input)
+        input=input[:,:1,:,:,:].squeeze()
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)
         output0 = self.level1_2(output0)

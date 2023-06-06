@@ -122,7 +122,7 @@ class CGNet():
                 features = features.to(device)
                 labels = labels.to(device)
 
-                prev_features=shift_and_backfill(features)
+                prev_features=self.shift_and_backfill(features)
                 features = torch.stack((prev_features, features), dim=1)
 
                 outputs = torch.softmax(self.network(features), 1)
@@ -230,7 +230,7 @@ class CGNet():
             batch = features
             features = torch.tensor(features.values)
             features = features.to(device)
-            prev_features=shift_and_backfill(features)
+            prev_features=self.shift_and_backfill(features)
             features = torch.stack((prev_features, features), dim=1)
             if features.shape[0]==1:
                continue
@@ -274,7 +274,7 @@ class CGNet():
             features = features.to(device)
             labels = labels.to(device)
 
-            prev_features=shift_and_backfill(features)
+            prev_features=self.shift_and_backfill(features)
             features = torch.stack((prev_features, features), dim=1)
 
             with torch.no_grad():
@@ -316,7 +316,7 @@ class CGNet():
             features = features.to(device)
             labels = labels.to(device)
 
-            prev_features=shift_and_backfill(features)
+            prev_features=self.shift_and_backfill(features)
             prev_features = prev_features.to(device)
             features = torch.stack((prev_features, features), dim=1)
             print("SA",features.shape)

@@ -73,7 +73,7 @@ class CGNet():
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=2, threshold=0.002, verbose=True)
 
 
-    def shift_and_backfill(tensor):
+    def shift_and_backfill(self,tensor):
         clone = tensor.clone()
         first_value = clone[0].unsqueeze(0)  # Get the first value and unsqueeze to match tensor dimensions
         clone[1:] = clone[:-1]  # Shift all values forward

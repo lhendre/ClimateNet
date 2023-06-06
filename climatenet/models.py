@@ -72,6 +72,14 @@ class CGNet():
         if self.config.scheduler:
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=2, threshold=0.002, verbose=True)
 
+
+    def shift_and_backfill(tensor):
+        clone = tensor.clone()
+        first_value = clone[0].unsqueeze(0)  # Get the first value and unsqueeze to match tensor dimensions
+        clone[1:] = clone[:-1]  # Shift all values forward
+        clone[0] = first_value.expand_as(clone[0])  # Backfill with a duplicate of the first value
+        return clone
+
     def train(self, train_dataset: ClimateDatasetLabeled, val_dataset: ClimateDatasetLabeled=None):
         '''Train the network on the train dataset for the given amount of epochs, and validate it
         at each epoch on the validation dataset.'''
@@ -113,29 +121,9 @@ class CGNet():
 
                 features = features.to(device)
                 labels = labels.to(device)
-                  # prev_features = features.clone()  # Duplicate the initial version
-                # Forward pass
-                if len(prev_features) != 0:
-                    s1=0
 
-                    if features.shape[0]!=prev_features.shape[0]:
-                      if prev_features.shape[0]>features.shape[0]:
-                        s=prev_features.shape[0]-features.shape[0]
-                        prev_features=prev_features[s:,:,:,:]
-                      else:
-                        s=features.shape[0]-prev_features.shape[0]
-
-                        features=features[s:,:,:,:]
-
-                        labels=labels[s:,:,:]
-                    prev_features = prev_features.to(device)
-
-                    features = torch.stack((prev_features, features), dim=1)
-                else:
-                      # Handle the initial case
-                      # Initialize prev_features with an empty tensor or duplicate the initial version
-                    prev_features = features.clone()  # Duplicate the initial version
-                    features = torch.stack((prev_features, features), dim=1)
+                prev_features=shift_and_backfill(features)
+                features = torch.stack((prev_features, features), dim=1)
 
                 outputs = torch.softmax(self.network(features), 1)
                 outputs = outputs.to(device)
@@ -242,26 +230,8 @@ class CGNet():
             batch = features
             features = torch.tensor(features.values)
             features = features.to(device)
-            if len(prev_features) != 0:
-                s1=0
-
-                if features.shape[0]!=prev_features.shape[0]:
-                  if prev_features.shape[0]>features.shape[0]:
-                    s=prev_features.shape[0]-features.shape[0]
-                    prev_features=prev_features[s:,:,:,:]
-                  else:
-                    s=features.shape[0]-prev_features.shape[0]
-
-                    features=features[s:,:,:,:]
-                    labels=labels[s:,:,:]
-                prev_features = prev_features.to(device)
-
-                features = torch.stack((prev_features, features), dim=1)
-            else:
-                # Handle the initial case
-                # Initialize prev_features with an empty tensor or duplicate the initial version
-                prev_features = features.clone()  # Duplicate the initial version
-                features = torch.stack((prev_features, features), dim=1)
+            prev_features=shift_and_backfill(features)
+            features = torch.stack((prev_features, features), dim=1)
             if features.shape[0]==1:
                continue
             with torch.no_grad():
@@ -304,25 +274,8 @@ class CGNet():
             features = features.to(device)
             labels = labels.to(device)
 
-            if len(prev_features) != 0:
-
-                if features.shape[0]!=prev_features.shape[0]:
-                    if prev_features.shape[0]>features.shape[0]:
-                        s=prev_features.shape[0]-features.shape[0]
-                        prev_features=prev_features[s:,:,:,:]
-                    else:
-                        s=features.shape[0]-prev_features.shape[0]
-
-                        features=features[s:,:,:,:]
-                        labels=labels[s:,:,:]
-                prev_features = prev_features.to(device)
-
-                features = torch.stack((prev_features, features), dim=1)
-            else:
-                      # Handle the initial case
-                      # Initialize prev_features with an empty tensor or duplicate the initial version
-                prev_features = features.clone()  # Duplicate the initial version
-                features = torch.stack((prev_features, features), dim=1)
+            prev_features=shift_and_backfill(features)
+            features = torch.stack((prev_features, features), dim=1)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -362,29 +315,10 @@ class CGNet():
 
             features = features.to(device)
             labels = labels.to(device)
-            if len(prev_features) != 0:
-                print(prev_features.shape,features.shape)
-                if features.shape[0]!=prev_features.shape[0]:
-                    if prev_features.shape[0]>features.shape[0]:
-                        s=prev_features.shape[0]-features.shape[0]
-                        prev_features=prev_features[s:,:,:,:]
-                        print("c:")
 
-                    else:
-                        s=features.shape[0]-prev_features.shape[0]
-
-                        features=features[s:,:,:,:]
-                        labels=labels[s:,:,:]
-                        print("B:")
-                prev_features = prev_features.to(device)
-
-                print(prev_features.shape,features.shape)
-                features = torch.stack((prev_features, features), dim=1)
-            else:
-                      # Handle the initial case
-                      # Initialize prev_features with an empty tensor or duplicate the initial version
-                prev_features = features.clone()  # Duplicate the initial version
-                features = torch.stack((prev_features, features), dim=1)
+            prev_features=shift_and_backfill(features)
+            prev_features = prev_features.to(device)
+            features = torch.stack((prev_features, features), dim=1)
             print("SA",features.shape)
             if features.shape[0]==1:
                continue
@@ -515,7 +449,7 @@ class CGNetModule(nn.Module):
         # self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 1, 1), padding=(1, 0, 0))
 # self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 1, 1), padding=(1, 0, 0))
         self.padding=(1,0,0)
-        self.temporal_conv = nn.Conv3d(2, 2, kernel_size=(3, 1, 1), padding=self.padding)
+        self.temporal_conv = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
 
         if dropout_flag:
             print("have dropout layer")
@@ -542,8 +476,8 @@ class CGNetModule(nn.Module):
             return: segmentation map
         """
         # stage 1
-        input_conv = self.temporal_conv(input)
-        input=input_conv[:,1:,:,:,:].squeeze()
+        input = self.temporal_conv(input)
+        input=input[:,1:,:,:,:].squeeze()
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)
         output0 = self.level1_2(output0)

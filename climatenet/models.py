@@ -74,11 +74,13 @@ class CGNet():
 
 
     def shift_and_backfill(self,tensor):
-        clone = tensor.clone()
-        first_value = clone[0].unsqueeze(0)  # Get the first value and unsqueeze to match tensor dimensions
-        clone[1:] = clone[:-1]  # Shift all values forward
-        clone[0] = first_value.expand_as(clone[0])  # Backfill with a duplicate of the first value
-        return clone
+      clone = tensor.clone()
+      clone_size = list(clone.size())
+      clone_size[0] += 1  # Increase size by 1
+      shifted = torch.cat([tensor[:1], clone[:-1]])  # Shift all values forward
+      backfilled = tensor[:1].expand((1,) + tuple(clone_size[1:]))  # Create a tensor with a duplicate of the first value
+      result = torch.cat([backfilled, shifted])  # Combine the backfilled value and the shifted tensor
+      return result[:-1]
 
     def train(self, train_dataset: ClimateDatasetLabeled, val_dataset: ClimateDatasetLabeled=None):
         '''Train the network on the train dataset for the given amount of epochs, and validate it
@@ -123,8 +125,9 @@ class CGNet():
                 labels = labels.to(device)
 
                 prev_features=self.shift_and_backfill(features)
+                print(prev_features.shape,features.shape)
                 features = torch.stack((prev_features, features), dim=1)
-
+                print(features.shape)
                 outputs = torch.softmax(self.network(features), 1)
                 outputs = outputs.to(device)
 
@@ -142,7 +145,6 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-                prev_features=torch.tensor(copy_features.values)
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -243,7 +245,6 @@ class CGNet():
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
-            prev_features=torch.tensor(copy_features.values)
 
         print(predictions)
         return xr.concat(predictions, dim='time')
@@ -284,7 +285,6 @@ class CGNet():
 
             val_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += val_loss.item()
-            prev_features=torch.tensor(copy_features.values)
 
         # Return validation stats:
         epoch_loss /= num_minibatches
@@ -331,7 +331,6 @@ class CGNet():
             epoch_loss += test_loss.item()
 
             epoch_loss += test_loss.item()
-            prev_features=torch.tensor(copy_features.values)
 
 
         # Compute and track evaluation stats
@@ -477,7 +476,9 @@ class CGNetModule(nn.Module):
         """
         # stage 1
         input = self.temporal_conv(input)
-        input=input[:,1:,:,:,:].squeeze()
+        input_S=input[:,1:,:,:,:].squeeze()
+        input = input.view(input.shape[0], 5, 768, 1152)
+
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)
         output0 = self.level1_2(output0)

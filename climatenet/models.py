@@ -52,13 +52,7 @@ class CGNet():
         if config is not None:
             # Create new model
             self.config = config
-            M=3
-            N=21
-            if self.config.N is not None:
-                N=self.config.N
-                M=self.config.M
-
-            self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)),M=M,N=N)
+            self.network = CGNetModule(classes=len(self.config.labels), channels=len(list(self.config.fields)))
         elif model_path is not None:
             # Load model
             self.config = Config(path.join(model_path, 'config.json'))
@@ -71,16 +65,6 @@ class CGNet():
 
         if self.config.scheduler:
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=2, threshold=0.002, verbose=True)
-
-
-    def shift_and_backfill(self,tensor):
-      clone = tensor.clone()
-      clone_size = list(clone.size())
-      clone_size[0] += 1  # Increase size by 1
-      shifted = torch.cat([tensor[:1], clone[:-1]])  # Shift all values forward
-      backfilled = tensor[:1].expand((1,) + tuple(clone_size[1:]))  # Create a tensor with a duplicate of the first value
-      result = torch.cat([backfilled, shifted])  # Combine the backfilled value and the shifted tensor
-      return result[:-1]
 
     def train(self, train_dataset: ClimateDatasetLabeled, val_dataset: ClimateDatasetLabeled=None):
         '''Train the network on the train dataset for the given amount of epochs, and validate it
@@ -99,12 +83,11 @@ class CGNet():
         self.network.to(device)
 
         collate = ClimateDatasetLabeled.collate
-        loader = DataLoader(train_dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=False)
+        loader = DataLoader(train_dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=True)
 
         # Prepare scheduler
         best_val_loss = float("inf")
         no_improvement_counter = 0
-        prev_features = []
 
         # Loop over epochs
         for epoch in range(1, self.config.epochs+1):
@@ -115,24 +98,32 @@ class CGNet():
             num_minibatches = len(loader)
             epoch_loss = 0.
             train_loss = 0.
+            count = 0
             for features, labels in epoch_loader:
-                copy_features=features
+                copy_features = features
+                if count == 0:
+                    prev=torch.tensor(copy_features.values)
+                    count+=1
+                    continue
+                count+=1
+                features=prev
                 # Move dataset to GPU if available
-                features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)
 
                 features = features.to(device)
                 labels = labels.to(device)
 
-                prev_features=self.shift_and_backfill(features)
-                print(prev_features.shape,features.shape)
-                features = torch.stack((prev_features, features), dim=1)
-                print(features.shape)
+                # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
                 outputs = outputs.to(device)
 
                 # Update training confusion matrix
+
                 predictions = torch.max(outputs, 1)[1]
+                if labels.shape[0]!=predictions.shape[0]:
+                    s=labels.shape[0]
+                    predictions=predictions[:s]
+                    outputs=outputs[:s]
                 train_aggregate_cm += get_cm(predictions, labels, 3)
 
                 # Backward pass
@@ -145,6 +136,7 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+                prev=torch.tensor(copy_features.values)
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -225,26 +217,33 @@ class CGNet():
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         predictions = []
-        prev_features = []
-
+        count = 0
         for features, labels in epoch_loader:
-            copy_features=features
+            copy_features = features
+            if count == 0:
+                prev=torch.tensor(copy_features.values)
+                count+=1
+                continue
+            features=prev
+            count+=1
             batch = features
             features = torch.tensor(features.values)
             features = features.to(device)
-            prev_features=self.shift_and_backfill(features)
-            features = torch.stack((prev_features, features), dim=1)
-            if features.shape[0]==1:
-               continue
+
+
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
             preds = torch.max(outputs, 1)[1].cpu().numpy()
-
+            if labels.shape[0]!=predictions.shape[0]:
+                s=labels.shape[0]
+                predictions=predictions[:s]
+                outputs=outputs[:s]
             coords = batch.coords
             del coords['variable']
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
+            prev=torch.tensor(copy_features.values)
 
         print(predictions)
         return xr.concat(predictions, dim='time')
@@ -264,19 +263,18 @@ class CGNet():
         aggregate_cm = np.zeros((3,3))
         num_minibatches = len(loader)
         epoch_loss = 0.
-        prev_features = []
 
+        count = 0
         for features, labels in epoch_loader:
-            copy_features=features
-
+            copy_features = features
+            if count == 0:
+                continue
+            count+=1
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
             features = features.to(device)
             labels = labels.to(device)
-
-            prev_features=self.shift_and_backfill(features)
-            features = torch.stack((prev_features, features), dim=1)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -285,6 +283,7 @@ class CGNet():
 
             val_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += val_loss.item()
+            prev=torch.tensor(copy_features.values)
 
         # Return validation stats:
         epoch_loss /= num_minibatches
@@ -305,33 +304,35 @@ class CGNet():
         aggregate_cm = np.zeros((3,3))
         epoch_loss = 0.
         num_minibatches = len(loader)
-        prev_features = []
 
+        count = 0
         for features, labels in epoch_loader:
-            copy_features=features
-
+            copy_features = features
+            if count == 0:
+                prev=torch.tensor(copy_features.values)
+                count+=1
+                continue
+            count+=1
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
             features = features.to(device)
             labels = labels.to(device)
 
-            prev_features=self.shift_and_backfill(features)
-            prev_features = prev_features.to(device)
-            features = torch.stack((prev_features, features), dim=1)
-            print("SA",features.shape)
-            if features.shape[0]==1:
-               continue
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
             predictions = torch.max(outputs, 1)[1]
+            if labels.shape[0]!=predictions.shape[0]:
+                s=labels.shape[0]
+                predictions=predictions[:s]
+                outputs=outputs[:s]
             aggregate_cm += get_cm(predictions, labels, 3)
 
             test_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += test_loss.item()
 
             epoch_loss += test_loss.item()
-
+            prev=torch.tensor(copy_features.values)
 
         # Compute and track evaluation stats
         epoch_loss /= num_minibatches
@@ -394,7 +395,7 @@ class CGNet():
 
         # Load data for a forward pass
         collate = ClimateDatasetLabeled.collate
-        loader = DataLoader(dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=False)
+        loader = DataLoader(dataset, batch_size=self.config.train_batch_size, collate_fn=collate, num_workers=0, shuffle=True)
 
         # Print summary using 'torchinfo'
         summary(self.network, \
@@ -422,7 +423,6 @@ class CGNetModule(nn.Module):
         """
         super().__init__()
 
-
         self.level1_0 = ConvBNPReLU(channels, 32, 3, 2)      # feature map size divided 2, 1/2
         self.level1_1 = ConvBNPReLU(32, 32, 3, 1)
         self.level1_2 = ConvBNPReLU(32, 32, 3, 1)
@@ -445,10 +445,6 @@ class CGNetModule(nn.Module):
         for i in range(0, N-1):
             self.level3.append(ContextGuidedBlock(128 , 128, dilation_rate=4, reduction=16)) # CG block
         self.bn_prelu_3 = BNPReLU(256)
-        # self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 1, 1), padding=(1, 0, 0))
-# self.temporal_conv = nn.Conv3d(channels, channels, kernel_size=(3, 1, 1), padding=(1, 0, 0))
-        self.padding=(1,0,0)
-        self.temporal_conv = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
 
         if dropout_flag:
             print("have dropout layer")
@@ -475,10 +471,6 @@ class CGNetModule(nn.Module):
             return: segmentation map
         """
         # stage 1
-        input = self.temporal_conv(input)
-        input_S=input[:,1:,:,:,:].squeeze()
-        input = input.view(input.shape[0], 5, 768, 1152)
-
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)
         output0 = self.level1_2(output0)

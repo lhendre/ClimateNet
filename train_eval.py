@@ -19,11 +19,15 @@ data_path = args.data_path
 config = Config(model_path + 'config.json')
 cgnet = CGNet(config)
 
+inference_path = path.join(data_path, 'test')
+inference = ClimateDataset(inference_path, config)
+
+
 # Train model
 train = ClimateDatasetLabeled(path.join(data_path, 'train'), config)
 val = ClimateDatasetLabeled(path.join(data_path, 'val'), config)
 train_history = cgnet.train(train, val)
-
+cgnet.save_model(path.join('models', model_path))
 # Evaluate model performance
 test = ClimateDatasetLabeled(path.join(data_path, 'test'), config)
 test_history = cgnet.evaluate(test)

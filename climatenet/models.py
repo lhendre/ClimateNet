@@ -68,22 +68,44 @@ class CGNet():
         if self.config.scheduler:
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.1, patience=2, threshold=0.002, verbose=True)
 
-    def map_channel(self, ds, metric, lon=-80, lat=35, timesteps=[1, 4, 8, 11]):
-        samp = ds.isel(time=timesteps)
-        p = samp.plot(
-            transform=ccrs.PlateCarree(),
-            col="time",
-            subplot_kws={"projection": ccrs.Orthographic(lon, lat)},
-            aspect=1.3, size=8
-        )
+    def map_channel(self,ds, metric, lon=-80, lat=35, timesteps=[1]):
+      ds = xr.concat(ds, dim='time')
 
-        for ax in p.axes.flat:
-            ax.coastlines()
-            ax.gridlines()
+      print("DS",ds)
+      t =ds.isel(time=timesteps)
+      print("SFSD",t)
+      p = ds.isel(time=timesteps).plot(
+        transform=ccrs.PlateCarree(),
+        col="time",
+        subplot_kws={"projection": ccrs.Orthographic(lon, lat)},
+        aspect = 1.3, size = 8
+      )
 
-        plt.draw()
-        plt.show(block=True)
-        return
+      for ax in p.axes.flat:
+        ax.coastlines()
+        ax.gridlines()
+
+      plt.draw()
+
+      return
+
+
+    # def map_channel(self, ds, metric, lon=-80, lat=35, timesteps=[1, 4, 8, 11]):
+    #     samp = ds.isel(time=timesteps)
+    #     p = samp.plot(
+    #         transform=ccrs.PlateCarree(),
+    #         col="time",
+    #         subplot_kws={"projection": ccrs.Orthographic(lon, lat)},
+    #         aspect=1.3, size=8
+    #     )
+    #
+    #     for ax in p.axes.flat:
+    #         ax.coastlines()
+    #         ax.gridlines()
+    #
+    #     plt.draw()
+    #     plt.show(block=True)
+    #     return
 
     def train(self, train_dataset: ClimateDatasetLabeled, val_dataset: ClimateDatasetLabeled=None):
         '''Train the network on the train dataset for the given amount of epochs, and validate it
@@ -245,7 +267,6 @@ class CGNet():
                 continue
             features=prev
             count+=1
-            batch = features
             features = features.to(device)
 
 

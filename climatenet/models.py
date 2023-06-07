@@ -18,6 +18,8 @@ import pandas as pd
 from climatenet.utils.utils import Config
 from os import path
 import pathlib
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
 
 class CGNet():
     '''
@@ -244,22 +246,22 @@ class CGNet():
             features=prev
             count+=1
             batch = features
-            features = torch.tensor(features.values)
             features = features.to(device)
 
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
             preds = torch.max(outputs, 1)[1].cpu().numpy()
-            if labels.shape[0]!=predictions.shape[0]:
-                s=labels.shape[0]
-                predictions=predictions[:s]
-                outputs=outputs[:s]
+
             coords = batch.coords
             del coords['variable']
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
+            if labels.shape[0]!=predictions.shape[0]:
+                s=labels.shape[0]
+                predictions=predictions[:s]
+                outputs=outputs[:s]
             self.map_channel(predictions, "LABELS")
             prev=torch.tensor(copy_features.values)
 

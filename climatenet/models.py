@@ -44,6 +44,14 @@ class CGNet():
     optimizer : torch.optim.Optimizer
         Stores the optimizer we use for training the model
     '''
+    def shift_and_backfill(self,tensor):
+      clone = tensor.clone()
+      clone_size = list(clone.size())
+      clone_size[0] += 1  # Increase size by 1
+      shifted = torch.cat([tensor[:1], clone[:-1]])  # Shift all values forward
+      backfilled = tensor[:1].expand((1,) + tuple(clone_size[1:]))  # Create a tensor with a duplicate of the first value
+      result = torch.cat([backfilled, shifted])  # Combine the backfilled value and the shifted tensor
+      return result[:-1]
 
     def __init__(self, config: Config = None, model_path: str = None):
 
@@ -142,17 +150,16 @@ class CGNet():
             count = 0
             for features, labels in epoch_loader:
                 copy_features = features
-                if count == 0:
-                    prev=torch.tensor(copy_features.values)
-                    count+=1
-                    continue
-                count+=1
-                features=prev
-                # Move dataset to GPU if available
+                features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)
 
                 features = features.to(device)
                 labels = labels.to(device)
+
+                prev_features=self.shift_and_backfill(features)
+                print(prev_features.shape,features.shape)
+                features = torch.stack((prev_features, features), dim=1)
+                print(features.shape)
 
                 # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
@@ -161,10 +168,6 @@ class CGNet():
                 # Update training confusion matrix
 
                 predictions = torch.max(outputs, 1)[1]
-                if labels.shape[0]!=predictions.shape[0]:
-                    s=labels.shape[0]
-                    predictions=predictions[:s]
-                    outputs=outputs[:s]
                 train_aggregate_cm += get_cm(predictions, labels, 3)
 
                 # Backward pass
@@ -177,7 +180,6 @@ class CGNet():
                 train_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-                prev=torch.tensor(copy_features.values)
 
             # Compute and track training hisotry
             epoch_loss /= num_minibatches
@@ -261,13 +263,13 @@ class CGNet():
         count = 0
         for features, labels in epoch_loader:
             copy_features = features
-            if count == 0:
-                prev=torch.tensor(copy_features.values)
-                count+=1
-                continue
-            features=prev
-            count+=1
+            batch = features
+            features = torch.tensor(features.values)
             features = features.to(device)
+            prev_features=self.shift_and_backfill(features)
+            features = torch.stack((prev_features, features), dim=1)
+            if features.shape[0]==1:
+               continue
 
 
             with torch.no_grad():
@@ -279,10 +281,6 @@ class CGNet():
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
-            if labels.shape[0]!=predictions.shape[0]:
-                s=labels.shape[0]
-                predictions=predictions[:s]
-                outputs=outputs[:s]
             self.map_channel(predictions, "LABELS")
             prev=torch.tensor(copy_features.values)
 
@@ -349,31 +347,27 @@ class CGNet():
         count = 0
         for features, labels in epoch_loader:
             copy_features = features
-            if count == 0:
-                prev=torch.tensor(copy_features.values)
-                count+=1
-                continue
-            count+=1
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
             features = features.to(device)
             labels = labels.to(device)
 
+            prev_features=self.shift_and_backfill(features)
+            prev_features = prev_features.to(device)
+            features = torch.stack((prev_features, features), dim=1)
+            print("SA",features.shape)
+            if features.shape[0]==1:
+               continue
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
             predictions = torch.max(outputs, 1)[1]
-            if labels.shape[0]!=predictions.shape[0]:
-                s=labels.shape[0]
-                predictions=predictions[:s]
-                outputs=outputs[:s]
             aggregate_cm += get_cm(predictions, labels, 3)
 
             test_loss = loss_function(outputs, labels, config_loss=self.config.loss)
             epoch_loss += test_loss.item()
 
             epoch_loss += test_loss.item()
-            prev=torch.tensor(copy_features.values)
 
         # Compute and track evaluation stats
         epoch_loss /= num_minibatches

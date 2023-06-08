@@ -3,9 +3,10 @@ from torch.autograd import Variable
 from torch import nn
 import numpy as np
 import torch.nn.functional as F
+from climatenet.utils.utils import get_device
 
 def loss_function(logits, true, config_loss='jaccard'):
-    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    device = get_device()
     loss = 0.0
     
     if config_loss == "jaccard":
@@ -35,7 +36,7 @@ def inputs(logits, true):
         true_1_hot: true classifications in a one-hot-encoded vector
         dims: dimensions of the true vector
     """
-    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    device = get_device()
     num_classes = logits.shape[1]
     true_1_hot = torch.eye(num_classes, device = device)[true.squeeze(1)]
     true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
@@ -96,7 +97,7 @@ def weighted_jaccard_loss(logits, true, eps=1e-7):
     cardinality = get_cardinality(probas, true_1_hot, dims)
     union = get_union(cardinality, intersection)
 
-    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    device = get_device()
     weights = torch.tensor([0.678, 31.08, 2.9], device=device) # Tensor of size [ 3 ]
 
     jacc_loss = (intersection / (union + eps)) # Tensor of size [ 3 x 1152 ]
@@ -147,7 +148,7 @@ def weighted_cross_entropy_loss(logits, true):
     Returns:
         wce_loss: the weighted cross-entropy loss.
     """
-    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    device = get_device()
 
     wce_loss = nn.CrossEntropyLoss(weight=torch.tensor([0.355, 72.171, 5.875], device=device))
     return wce_loss(logits, true)
@@ -168,7 +169,7 @@ def weighted_jaccard_loss(logits, true, eps=1e-7):
     cardinality = get_cardinality(probas, true_1_hot, dims)
     union = get_union(cardinality, intersection)
 
-    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    device = get_device()
     weights = torch.tensor([0.355, 72.171, 5.875], device=device) # Tensor of size [ 3 ]
 
     jacc_loss = (intersection / (union + eps)) # Tensor of size [ 3 x 1152 ]

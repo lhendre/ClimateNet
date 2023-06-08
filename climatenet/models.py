@@ -15,7 +15,7 @@ from tqdm import tqdm
 import numpy as np
 import xarray as xr
 import pandas as pd
-from climatenet.utils.utils import Config
+from climatenet.utils.utils import Config, get_device
 from os import path
 import pathlib
 
@@ -44,7 +44,6 @@ class CGNet():
     '''
 
     def __init__(self, config: Config = None, model_path: str = None):
-
         if config is not None and model_path is not None:
             raise ValueError('''Config and weight path set at the same time.
             Pass a config if you want to create a new model,
@@ -79,7 +78,7 @@ class CGNet():
                                         'test_ious', 'test_dices', 'test_precision', 'test_recall', 'test_specificity', 'test_sensitivity'])
 
         # Push model to GPU if available
-        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        device = get_device()
         self.network.to(device)
 
         collate = ClimateDatasetLabeled.collate
@@ -105,8 +104,8 @@ class CGNet():
                 features = torch.tensor(features.values)
                 labels = torch.tensor(labels.values)
 
-                features = features.to(device)
-                labels = labels.to(device)
+                features = features.to(device, dtype=torch.float)
+                labels = labels.to(device, dtype=torch.int)
 
                 # Forward pass
                 outputs = torch.softmax(self.network(features), 1)
@@ -203,13 +202,13 @@ class CGNet():
         collate = ClimateDatasetLabeled.collate
         loader = DataLoader(dataset, batch_size=self.config.pred_batch_size, collate_fn=collate)
         epoch_loader = tqdm(loader, leave=True)
-        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        device = get_device()
 
         predictions = []
         for features, labels in epoch_loader:
             batch = features
             features = torch.tensor(features.values)
-            features = features.to(device)
+            features = features.to(device, dtype=torch.float)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -231,7 +230,7 @@ class CGNet():
         collate = ClimateDatasetLabeled.collate
         loader = DataLoader(dataset, batch_size=self.config.pred_batch_size, collate_fn=collate, num_workers=0)
 
-        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        device = get_device()
 
         print(f'\n---------- Validation ({device}) ----------')
 
@@ -245,8 +244,8 @@ class CGNet():
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
-            features = features.to(device)
-            labels = labels.to(device)
+            features = features.to(device, dtype=torch.float)
+            labels = labels.to(device, dtype=torch.int)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)
@@ -267,7 +266,7 @@ class CGNet():
         collate = ClimateDatasetLabeled.collate
         loader = DataLoader(dataset, batch_size=self.config.pred_batch_size, collate_fn=collate, num_workers=0)
 
-        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        device = get_device()
 
         print(f'\n---------- Evaluation ({device}) ----------')
 
@@ -281,8 +280,8 @@ class CGNet():
             features = torch.tensor(features.values)
             labels = torch.tensor(labels.values)
 
-            features = features.to(device)
-            labels = labels.to(device)
+            features = features.to(device, dtype=torch.float)
+            labels = labels.to(device, dtype=torch.int)
 
             with torch.no_grad():
                 outputs = torch.softmax(self.network(features), 1)

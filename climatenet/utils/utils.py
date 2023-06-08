@@ -54,3 +54,6 @@ class Config():
         with open(save_path, 'w', encoding='utf-8') as f:
             json.dump(self.config_dict, f, ensure_ascii=False, indent=4)
         
+
+def get_device():
+    return torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")

@@ -487,7 +487,11 @@ class CGNetModule(nn.Module):
         else:
             self.classifier = nn.Sequential(Conv(256, classes, 1, 1))
         self.padding=(1,0,0)
-        self.temporal_conv = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
+        self.temporal_conv_2 = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
+        self.temporal_conv_0 = nn.Conv3d(2, 2, kernel_size=(3, 1, 1), padding=self.padding)
+        self.temporal_conv_1 = nn.Conv3d(2, 2, kernel_size=(3, 1, 1), padding=self.padding)
+        self.lstm = nn.LSTM(input_size=256, hidden_size=256, num_layers=1, batch_first=True)
+
         #init weights
         for m in self.modules():
             classname = m.__class__.__name__
@@ -506,7 +510,9 @@ class CGNetModule(nn.Module):
             input: Receives the input RGB image
             return: segmentation map
         """
-        input = self.temporal_conv(input)
+        input = self.temporal_conv_0(input)
+        input = self.temporal_conv_1(input)
+        input = self.temporal_conv_2(input)
         input_S=input[:,1:,:,:,:].squeeze()
         input = input.view(input.shape[0], 5, 768, 1152)
         # stage 1
@@ -537,10 +543,17 @@ class CGNetModule(nn.Module):
                 output2 = layer(output2)
 
         output2_cat = self.bn_prelu_3(torch.cat([output2_0, output2], 1))
+        batch_size, _, height, width = output2_cat.size()
+        output2_cat = output2_cat.view(batch_size, height * width, -1)
+
+        # Apply LSTM layer
+        lstm_output, _ = self.lstm(output2_cat)
+
+        # Reshape lstm_output back to the original shape (batch, channels, height, width)
+        lstm_output = lstm_output.view(batch_size, height, width, -1).permute(0, 3, 1, 2)
 
         # classifier
-        classifier = self.classifier(output2_cat)
-
+        classifier = self.classifier(lstm_output)
         # upsample segmentation map ---> the input image size
         out = F.interpolate(classifier, input.size()[2:], mode='bilinear',align_corners = False)   #Upsample score map, factor=8
         return out

@@ -490,7 +490,6 @@ class CGNetModule(nn.Module):
         self.temporal_conv_2 = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
         self.temporal_conv_0 = nn.Conv3d(2, 2, kernel_size=(3, 1, 1), padding=self.padding)
         self.temporal_conv_1 = nn.Conv3d(2, 2, kernel_size=(3, 1, 1), padding=self.padding)
-        self.lstm = nn.LSTM(input_size=256, hidden_size=256, num_layers=1, batch_first=True)
 
         #init weights
         for m in self.modules():
@@ -546,14 +545,8 @@ class CGNetModule(nn.Module):
         batch_size, _, height, width = output2_cat.size()
         output2_cat = output2_cat.view(batch_size, height * width, -1)
 
-        # Apply LSTM layer
-        lstm_output, _ = self.lstm(output2_cat)
-
-        # Reshape lstm_output back to the original shape (batch, channels, height, width)
-        lstm_output = lstm_output.view(batch_size, height, width, -1).permute(0, 3, 1, 2)
-
         # classifier
-        classifier = self.classifier(lstm_output)
+        classifier = self.classifier(output2_cat)
         # upsample segmentation map ---> the input image size
         out = F.interpolate(classifier, input.size()[2:], mode='bilinear',align_corners = False)   #Upsample score map, factor=8
         return out

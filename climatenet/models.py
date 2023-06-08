@@ -492,7 +492,8 @@ class CGNetModule(nn.Module):
             self.classifier = nn.Sequential(nn.Dropout2d(0.1, False),Conv(256, classes, 1, 1))
         else:
             self.classifier = nn.Sequential(Conv(256, classes, 1, 1))
-
+        self.padding=(1,0,0)
+        self.temporal_conv = nn.Conv3d(2, 1, kernel_size=(3, 1, 1), padding=self.padding)
         #init weights
         for m in self.modules():
             classname = m.__class__.__name__
@@ -511,6 +512,9 @@ class CGNetModule(nn.Module):
             input: Receives the input RGB image
             return: segmentation map
         """
+        input = self.temporal_conv(input)
+        input_S=input[:,1:,:,:,:].squeeze()
+        input = input.view(input.shape[0], 5, 768, 1152)
         # stage 1
         output0 = self.level1_0(input)
         output0 = self.level1_1(output0)

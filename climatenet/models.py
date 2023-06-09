@@ -281,10 +281,7 @@ class CGNet():
             dims = [dim for dim in batch.dims if dim != "variable"]
 
             predictions.append(xr.DataArray(preds, coords=coords, dims=dims, attrs=batch.attrs))
-            self.map_channel(predictions, "LABELS")
-            prev=torch.tensor(copy_features.values)
 
-        print(predictions)
         return xr.concat(predictions, dim='time')
 
     def validate(self, dataset: ClimateDatasetLabeled):

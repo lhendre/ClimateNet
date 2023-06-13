@@ -1,9 +1,9 @@
 # CS231 Semantic Segmentation of Extreme Climate Events
 
-Tropical cyclones (TCs), also known as hurricanes, typhoons or tropical storms, are the most destructive type of extreme weather events and have caused $1.1 trillion in damage and 6,697 deaths since 1980 in the US alone. 
+Tropical cyclones (TCs), also known as hurricanes, typhoons or tropical storms, are the most destructive type of extreme weather events and have caused $1.1 trillion in damage and 6,697 deaths since 1980 in the US alone.
 
 In this project, we apply the light-weight CGNet context guided computer vision architecture to semantic segmentation for the identification of tropical cyclones in climate simulations data.
-<!-- 
+<!--
 https://user-images.githubusercontent.com/3156495/207959086-e1a2e246-b863-4420-8275-b76c4877ba6d.mp4 -->
 
 ## Getting started
@@ -12,14 +12,16 @@ https://user-images.githubusercontent.com/3156495/207959086-e1a2e246-b863-4420-8
 - Run the `download_climatenet.ipynb` notebook in the `data/` folder to download ClimateNet.
 - Optionally: split the train set in train (1996-2007) and val (2008-2010).
 
-**2. Model:** 
-- We provide `train_eval.py`, a script that trains a model on the chosen parameters (in `config.json`).
+Directions for new IBTrACS/ERA5 data coming soon
+
+**2. Model:**
+- We provide `train_eval.py`, a script that trains a model on the chosen parameters (in `config.json`).  Different branches will add in temporal segmentation along with LSTM
 Syntax:
 ```
 $ train_eval.py --model_path <model_path> -data_path <data_path>
 $ train_eval.py -m <model_path> -d <data_path>
 
-<model_path>: path to folder containing config.json describing the model 
+<model_path>: path to folder containing config.json describing the model
 <data_path>: path folder containing dataset with corresponding layers
 
 Example: train_eval.py -m '/model/1. Baseline' -d /data/ClimateNet/
@@ -58,30 +60,30 @@ Example: train_eval.py -m '/model/1. Baseline' -d /data/ClimateNet/
 
 ## ClimateNet Dataset
 
-ClimateNet is an open, community-sourced, human expert-labeled data set, mapping the outputs of Community Atmospheric Model (CAM5.1) climate simulation runs, for 459 time steps from 1996 to 2013. 
+ClimateNet is an open, community-sourced, human expert-labeled data set, mapping the outputs of Community Atmospheric Model (CAM5.1) climate simulation runs, for 459 time steps from 1996 to 2013.
 
 ![](<climatenet.png>)
 
 Each example is a netCDF file containing an array (1152, 768) for one time step, with each pixel mapping to a (latitude, longitude) point, with 16 channels for key atmospheric variables and one class label.
 
-| Channel | Description                                               | Units  | 
+| Channel | Description                                               | Units  |
 |---------|-----------------------------------------------------------|--------|
-| TMQ     | Total (vertically integrated) precipitable water          | kg/m^2 | 
-| U850    | Zonal wind at 850 mbar pressure surface                   | m/s    | 
-| V850    | Meridional wind at 850 mbar pressure surface              | m/s    | 
-| UBOT    | Lowest level zonal wind                                   | m/s    | 
-| VBOT    | Lowest model level meridional wind                        | m/s    | 
-| QREFHT  | Reference height humidity                                 | kg/kg  | 
-| PS      | Surface pressure                                          | Pa     | 
+| TMQ     | Total (vertically integrated) precipitable water          | kg/m^2 |
+| U850    | Zonal wind at 850 mbar pressure surface                   | m/s    |
+| V850    | Meridional wind at 850 mbar pressure surface              | m/s    |
+| UBOT    | Lowest level zonal wind                                   | m/s    |
+| VBOT    | Lowest model level meridional wind                        | m/s    |
+| QREFHT  | Reference height humidity                                 | kg/kg  |
+| PS      | Surface pressure                                          | Pa     |
 | PSL     | Sea level pressure                                        | Pa     |  
-| T200    | Temperature at 200 mbar pressure surface                  | K      | 
-| T500    | Temperature at 500 mbar pressure surface                  | K      | 
+| T200    | Temperature at 200 mbar pressure surface                  | K      |
+| T500    | Temperature at 500 mbar pressure surface                  | K      |
 | PRECT   | Total (convective and large-scale) precipitation rate     | m/s    |  
-| TS      | Surface temperature (radiative)                           | K      | 
-| TREFHT  | Reference height temperature                              | K      | 
-| Z1000   | Geopotential Z at 1000 mbar pressure surface              | m      | 
-| Z200    | Geopotential Z at 200 mbar pressure surface               | m      | 
-| ZBOT    | Lowest modal level height                                 | m      | 
+| TS      | Surface temperature (radiative)                           | K      |
+| TREFHT  | Reference height temperature                              | K      |
+| Z1000   | Geopotential Z at 1000 mbar pressure surface              | m      |
+| Z200    | Geopotential Z at 200 mbar pressure surface               | m      |
+| ZBOT    | Lowest modal level height                                 | m      |
 | LABELS  | 0: Background, 1: Tropical Cyclone, 2: Atmospheric river  | -      |  
 
 
